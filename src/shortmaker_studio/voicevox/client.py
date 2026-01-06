@@ -146,29 +146,78 @@ class VoiceVoxClient:
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"話者情報の取得に失敗: {e}")
 
-    def find_speaker_by_name(self, name: str) -> Optional[Tuple[int, int]]:
+    def find_speaker_by_name(self, name: str) -> Optional[int]:
         """
-        話者名から speaker_id と style_id を検索
+        話者名から style_id を検索
 
         Args:
-            name: 話者名（例: "青山流星"）
+            name: 話者名（例: "四国めたん"）
 
         Returns:
-            (speaker_id, style_id) のタプル、見つからない場合はNone
+            style_id、見つからない場合はNone
         """
         try:
             speakers = self.get_speakers()
+
+            # デバッグ: 利用可能な話者を表示
+            print("利用可能な話者:")
+            for speaker in speakers:
+                print(f"  - {speaker.get('name')}")
+                for style in speaker.get("styles", []):
+                    print(f"    - {style.get('name')} (ID: {style.get('id')})")
 
             for speaker in speakers:
                 if speaker.get("name") == name:
                     # 最初のスタイルを使用
                     styles = speaker.get("styles", [])
                     if styles:
-                        return (speaker.get("speaker_uuid"), styles[0].get("id"))
+                        style_id = styles[0].get("id")
+                        print(f"✓ 話者「{name}」を見つけました (Style ID: {style_id})")
+                        return style_id
 
+            print(f"✗ 話者「{name}」が見つかりませんでした")
             return None
         except Exception as e:
             print(f"話者検索エラー: {e}")
+            return None
+
+    def get_default_speaker(self) -> Optional[int]:
+        """
+        デフォルト話者のstyle_idを取得
+
+        優先順位:
+        1. 四国めたん
+        2. ずんだもん
+        3. 最初の話者
+
+        Returns:
+            style_id、見つからない場合はNone
+        """
+        try:
+            speakers = self.get_speakers()
+
+            # 優先話者リスト
+            preferred_speakers = ["四国めたん", "ずんだもん", "春日部つむぎ"]
+
+            for preferred in preferred_speakers:
+                for speaker in speakers:
+                    if speaker.get("name") == preferred:
+                        styles = speaker.get("styles", [])
+                        if styles:
+                            style_id = styles[0].get("id")
+                            print(f"デフォルト話者: {preferred} (Style ID: {style_id})")
+                            return style_id
+
+            # フォールバック: 最初の話者
+            if speakers and speakers[0].get("styles"):
+                first_speaker = speakers[0].get("name")
+                style_id = speakers[0]["styles"][0].get("id")
+                print(f"デフォルト話者（フォールバック）: {first_speaker} (Style ID: {style_id})")
+                return style_id
+
+            return None
+        except Exception as e:
+            print(f"デフォルト話者取得エラー: {e}")
             return None
 
     def create_audio_query(self, text: str, speaker_id: int) -> Dict:

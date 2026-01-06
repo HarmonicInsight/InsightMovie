@@ -217,7 +217,7 @@ class SpeakerSelectionPage(QWizardPage):
         layout = QVBoxLayout()
 
         info = QLabel(
-            "デフォルト話者として「青山流星」を設定します。\n"
+            "デフォルト話者を自動設定します。\n"
             "後でアプリケーション設定から変更できます。"
         )
         info.setWordWrap(True)
@@ -234,25 +234,35 @@ class SpeakerSelectionPage(QWizardPage):
     def initializePage(self):
         """ページ初期化時に話者を検索"""
         try:
-            result = self.client.find_speaker_by_name("青山流星")
-            if result:
-                speaker_uuid, style_id = result
+            # デフォルト話者を取得
+            style_id = self.client.get_default_speaker()
+
+            if style_id:
                 self.speaker_id = style_id
+
+                # 話者名を取得して表示
+                speakers = self.client.get_speakers()
+                speaker_name = "不明"
+                style_name = "不明"
+
+                for speaker in speakers:
+                    for style in speaker.get("styles", []):
+                        if style.get("id") == style_id:
+                            speaker_name = speaker.get("name")
+                            style_name = style.get("name")
+                            break
+
                 self.status_label.setText(
-                    f"✓ 「青山流星」を設定しました\n"
-                    f"(Speaker UUID: {speaker_uuid}, Style ID: {style_id})"
+                    f"✓ デフォルト話者を設定しました\n"
+                    f"話者: {speaker_name} ({style_name})\n"
+                    f"Style ID: {style_id}"
                 )
                 self.status_label.setStyleSheet("color: green;")
             else:
                 self.status_label.setText(
-                    "⚠ 「青山流星」が見つかりませんでした。\n"
-                    "利用可能な話者から自動選択します。"
+                    "✗ 話者の取得に失敗しました"
                 )
-                self.status_label.setStyleSheet("color: orange;")
-                # 最初の話者を使用
-                speakers = self.client.get_speakers()
-                if speakers and speakers[0].get("styles"):
-                    self.speaker_id = speakers[0]["styles"][0]["id"]
+                self.status_label.setStyleSheet("color: red;")
 
         except Exception as e:
             self.status_label.setText(f"✗ エラー: {e}")
