@@ -186,9 +186,10 @@ class VoiceVoxClient:
         デフォルト話者のstyle_idを取得
 
         優先順位:
-        1. 四国めたん
-        2. ずんだもん
-        3. 最初の話者
+        1. 青山龍星
+        2. 四国めたん
+        3. ずんだもん
+        4. 最初の話者
 
         Returns:
             style_id、見つからない場合はNone
@@ -197,7 +198,7 @@ class VoiceVoxClient:
             speakers = self.get_speakers()
 
             # 優先話者リスト
-            preferred_speakers = ["四国めたん", "ずんだもん", "春日部つむぎ"]
+            preferred_speakers = ["青山龍星", "四国めたん", "ずんだもん", "春日部つむぎ"]
 
             for preferred in preferred_speakers:
                 for speaker in speakers:
