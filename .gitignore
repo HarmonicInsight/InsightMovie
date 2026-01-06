@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# PyInstaller
+*.manifest
+# *.spec  # コメントアウト: build/shortmaker_studio.specはコミット対象
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+build/dist/
+build/build/
+build/installer_output/
+installer_output/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration
+config.json
+*.log
+
+# VOICEVOX downloaded files (should not be committed)
+# Note: src/shortmaker_studio/voicevox/ is source code and should be committed
+**/voicevox/run.exe
+**/voicevox/*.zip
+# Only ignore VOICEVOX in specific locations
+installer/voicevox/
+build/voicevox/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
