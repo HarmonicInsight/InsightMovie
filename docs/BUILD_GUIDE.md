@@ -111,6 +111,7 @@ build/installer_output/InsightMovie-Setup-1.0.0.exe
 **確認項目:**
 - インストール先の選択が正しく動作する
 - VOICEVOX自動セットアップのチェックボックスが表示される
+- ffmpeg自動セットアップのチェックボックスが表示される
 - VOICEVOX利用規約への同意ページが表示される
 - デスクトップアイコン作成が選択できる
 
@@ -133,7 +134,26 @@ dir %LOCALAPPDATA%\InsightMovie\voicevox
 where /R %LOCALAPPDATA%\InsightMovie\voicevox run.exe
 ```
 
-#### 5.3 アプリケーション起動テスト
+#### 5.3 ffmpeg自動セットアップのテスト
+
+インストール時に「ffmpeg自動セットアップ」にチェックを入れた場合：
+
+**期待される動作:**
+1. インストール中に「ffmpegをダウンロード中...」と表示
+2. インストール先の `tools\ffmpeg\bin\` にダウンロード
+3. ZIPが自動展開される
+4. ffmpeg.exeが配置される
+
+**確認方法:**
+```cmd
+# インストール先を確認（デフォルト: C:\Program Files\InsightMovie）
+dir "C:\Program Files\InsightMovie\tools\ffmpeg\bin"
+
+# ffmpeg.exeの存在確認
+"C:\Program Files\InsightMovie\tools\ffmpeg\bin\ffmpeg.exe" -version
+```
+
+#### 5.4 アプリケーション起動テスト
 
 インストール後、アプリケーションを起動：
 
@@ -143,13 +163,20 @@ where /R %LOCALAPPDATA%\InsightMovie\voicevox run.exe
 4. 「青山流星」が自動選択される
 5. メイン画面が表示される
 
-#### 5.4 音声生成テスト
+#### 5.5 音声生成・動画生成テスト
 
-1. テキスト入力: "こんにちは、テストです。"
-2. 「音声を生成」ボタンをクリック
-3. 数秒後に「音声生成完了」と表示される
-4. 「WAVファイルとして保存」で保存できる
-5. 保存したWAVファイルが再生できる
+**音声生成:**
+1. シーンにナレーションテキストを入力: "こんにちは、テストです。"
+2. 音声生成が実行される
+3. 生成された音声が再生できる
+
+**動画生成:**
+1. シーンに画像または動画を追加
+2. ナレーションと字幕を設定
+3. 「動画を生成」ボタンをクリック
+4. プログレスバーが表示される
+5. 動画生成が完了し、ファイルが保存される
+6. 生成された動画が再生できる
 
 ## トラブルシューティング
 
@@ -189,25 +216,30 @@ pip install PySide6
 - Python が正しくインストールされているか確認
 - `voicevox_downloader.py` のパスが正しいか確認
 
-### VOICEVOX自動ダウンロードエラー
+### VOICEVOX/ffmpeg自動ダウンロードエラー
 
 #### ダウンロードが失敗する
 
 ```bash
-# 手動でテスト
+# 手動でテスト（VOICEVOX）
 cd installer
 python voicevox_downloader.py --install-dir "C:\test_voicevox"
+
+# 手動でテスト（ffmpeg）
+python ffmpeg_downloader.py --install-dir "C:\test_ffmpeg"
 ```
 
 **考えられる原因:**
 - インターネット接続がない
-- GitHub APIのレート制限
+- GitHub APIのレート制限（VOICEVOX）
 - 公式配布元のURL変更
 
 **対処法:**
 1. インターネット接続を確認
 2. 時間を置いて再試行
-3. 手動でVOICEVOXをダウンロードして配置
+3. 手動でVOICEVOX/ffmpegをダウンロードして配置
+   - VOICEVOX: https://voicevox.hiroshiba.jp/
+   - ffmpeg: https://www.gyan.dev/ffmpeg/builds/
 
 ## リリース手順
 

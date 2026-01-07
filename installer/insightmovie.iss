@@ -40,14 +40,19 @@ japanese.VoicevoxSetupTitle=VOICEVOX自動セットアップ
 japanese.VoicevoxSetupDescription=VOICEVOXエンジンを公式配布元からダウンロードしてセットアップします（推奨）
 japanese.VoicevoxAgreement=VOICEVOXは公式配布元（https://voicevox.hiroshiba.jp/）からダウンロードされます。VOICEVOX利用規約に同意します。
 japanese.VoicevoxNote=注意: VOICEVOXは無断再配布禁止のため、公式配布元から直接取得します。
+japanese.FfmpegSetupDescription=ffmpegを公式配布元からダウンロードしてセットアップします（推奨）
+japanese.FfmpegNote=注意: 動画生成にはffmpegが必要です。
 english.VoicevoxSetupTitle=VOICEVOX Auto Setup
 english.VoicevoxSetupDescription=Download and setup VOICEVOX Engine from official source (Recommended)
 english.VoicevoxAgreement=I agree to download VOICEVOX from the official source (https://voicevox.hiroshiba.jp/) and accept its terms of use.
 english.VoicevoxNote=Note: VOICEVOX will be downloaded directly from the official source as redistribution is prohibited.
+english.FfmpegSetupDescription=Download and setup ffmpeg from official source (Recommended)
+english.FfmpegNote=Note: ffmpeg is required for video generation.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "voicevoxsetup"; Description: "{cm:VoicevoxSetupDescription}"; GroupDescription: "VOICEVOX"; Flags: checkedonce
+Name: "ffmpegsetup"; Description: "{cm:FfmpegSetupDescription}"; GroupDescription: "ffmpeg"; Flags: checkedonce
 
 [Files]
 ; アプリケーション本体（PyInstallerでビルドしたフォルダ全体）
@@ -55,6 +60,9 @@ Source: "..\build\dist\InsightMovie\*"; DestDir: "{app}"; Flags: ignoreversion r
 
 ; VOICEVOX自動ダウンロードスクリプト
 Source: "voicevox_downloader.py"; DestDir: "{tmp}"; Flags: deleteafterinstall
+
+; ffmpeg自動ダウンロードスクリプト
+Source: "ffmpeg_downloader.py"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 ; Pythonランタイム（オプション: スタンドアロン実行の場合は不要）
 ; Source: "python-embed\*"; DestDir: "{app}\python"; Flags: ignoreversion recursesubdirs
@@ -68,12 +76,18 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 ; VOICEVOX自動セットアップ（チェックされている場合のみ）
 Filename: "{cmd}"; Parameters: "/c python ""{tmp}\voicevox_downloader.py"" --install-dir ""{localappdata}\InsightMovie\voicevox"""; StatusMsg: "VOICEVOXエンジンをダウンロード中..."; Flags: runhidden waituntilterminated; Tasks: voicevoxsetup; Check: PythonInstalled
 
+; ffmpeg自動セットアップ（チェックされている場合のみ）
+Filename: "{cmd}"; Parameters: "/c python ""{tmp}\ffmpeg_downloader.py"" --install-dir ""{app}\tools\ffmpeg"""; StatusMsg: "ffmpegをダウンロード中..."; Flags: runhidden waituntilterminated; Tasks: ffmpegsetup; Check: PythonInstalled
+
 ; アプリケーション起動（オプション）
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 ; アンインストール時にVOICEVOXも削除するか確認
 Filename: "{cmd}"; Parameters: "/c rd /s /q ""{localappdata}\InsightMovie\voicevox"""; Flags: runhidden; Check: VoicevoxInstalled
+
+; アンインストール時にffmpegも削除
+Filename: "{cmd}"; Parameters: "/c rd /s /q ""{app}\tools\ffmpeg"""; Flags: runhidden; Check: FfmpegInstalled
 
 [Code]
 var
@@ -140,6 +154,14 @@ var
 begin
   VoicevoxPath := ExpandConstant('{localappdata}\InsightMovie\voicevox');
   Result := DirExists(VoicevoxPath);
+end;
+
+function FfmpegInstalled: Boolean;
+var
+  FfmpegPath: String;
+begin
+  FfmpegPath := ExpandConstant('{app}\tools\ffmpeg');
+  Result := DirExists(FfmpegPath);
 end;
 
 [Registry]
