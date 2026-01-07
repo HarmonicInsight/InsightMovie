@@ -3,7 +3,7 @@ InsightMovie - Main Entry Point
 メインエントリーポイント
 """
 import sys
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QDialog
 
 from .core import Config
 from .voicevox import VoiceVoxClient, EngineLauncher
@@ -24,7 +24,7 @@ def main():
     if config.is_first_run:
         # セットアップウィザード表示
         wizard = SetupWizard()
-        if wizard.exec() != QApplication.DialogCode.Accepted:
+        if wizard.exec() != QDialog.DialogCode.Accepted:
             # キャンセルされた場合は終了
             return 0
 
