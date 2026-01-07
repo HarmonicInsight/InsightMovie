@@ -1,0 +1,59 @@
+{
+  "scenes": [
+    {
+      "id": "scene-001",
+      "media_path": "C:\\path\\to\\image.png",
+      "media_type": "image",
+      "narration_text": "これは最初のシーンです。画像を表示しながらナレーションを流します。",
+      "subtitle_text": "最初のシーン",
+      "duration_mode": "auto",
+      "fixed_seconds": 3.0,
+      "audio_cache_path": null,
+      "video_cache_path": null
+    },
+    {
+      "id": "scene-002",
+      "media_path": "C:\\path\\to\\video.mp4",
+      "media_type": "video",
+      "narration_text": "次は動画素材のシーンです。",
+      "subtitle_text": "動画シーン",
+      "duration_mode": "auto",
+      "fixed_seconds": 3.0,
+      "audio_cache_path": null,
+      "video_cache_path": null
+    },
+    {
+      "id": "scene-003",
+      "media_path": "C:\\path\\to\\another.jpg",
+      "media_type": "image",
+      "narration_text": "",
+      "subtitle_text": "説明文なし（3秒固定）",
+      "duration_mode": "fixed",
+      "fixed_seconds": 3.0,
+      "audio_cache_path": null,
+      "video_cache_path": null
+    },
+    {
+      "id": "scene-004",
+      "media_path": null,
+      "media_type": "none",
+      "narration_text": "素材未設定でも説明文があればシーンは有効です。",
+      "subtitle_text": "",
+      "duration_mode": "auto",
+      "fixed_seconds": 3.0,
+      "audio_cache_path": null,
+      "video_cache_path": null
+    }
+  ],
+  "output": {
+    "resolution": "1080x1920",
+    "fps": 30,
+    "output_path": "C:\\output\\my_video.mp4"
+  },
+  "settings": {
+    "voicevox_base_url": "http://127.0.0.1:50021",
+    "voicevox_run_exe": "C:\\Users\\AppData\\Local\\InsightMovie\\voicevox\\run.exe",
+    "ffmpeg_path": "C:\\ffmpeg\\bin\\ffmpeg.exe",
+    "font_path": "C:\\Windows\\Fonts\\msgothic.ttc"
+  }
+}
