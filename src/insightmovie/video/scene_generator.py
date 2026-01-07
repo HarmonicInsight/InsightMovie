@@ -2,11 +2,9 @@
 Scene Generator
 1シーン動画生成
 """
-from __future__ import annotations
-
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from .ffmpeg_wrapper import FFmpegWrapper
 from ..project import Scene, MediaType
@@ -46,29 +44,6 @@ class SceneGenerator:
         # 見つからない場合は最初のフォントを返す（エラーは実行時に）
         return common_fonts[0]
 
-    @staticmethod
-    def _escape_filter_value(value: str) -> str:
-        """
-        ffmpeg フィルタ引数用に値をエスケープ。
-        
-        Notes:
-            - ':' はフィルタ区切りなのでエスケープ必須。
-            - "\\" は Windows パスで問題になるためエスケープ。
-            - "'" は drawtext のシングルクォート境界を壊すためエスケープ。
-        """
-        return (
-            value
-            .replace("\\", r"\\")
-            .replace(":", r"\:")
-            .replace("'", r"\'")
-        )
-
-    @classmethod
-    def _format_font_path(cls, font_path: str) -> str:
-        """drawtext 用にフォントパスを整形。"""
-        path = Path(font_path).as_posix()
-        return cls._escape_filter_value(path)
-
     def generate_scene(
         self,
         scene: Scene,
@@ -93,7 +68,7 @@ class SceneGenerator:
             成功したらTrue
         """
         try:
-            print("\n=== シーン動画生成開始 ===")
+            print(f"\n=== シーン動画生成開始 ===")
             print(f"  出力: {Path(output_path).name}")
             print(f"  長さ: {duration}秒")
             print(f"  解像度: {resolution}")
@@ -107,7 +82,7 @@ class SceneGenerator:
             temp_video = None
 
             # ステップ1: メディアから基本動画を生成
-            print("\n[1/3] 基本動画生成...")
+            print(f"\n[1/3] 基本動画生成...")
             if scene.has_media and scene.media_type == MediaType.IMAGE:
                 print(f"  画像から動画を生成: {Path(scene.media_path).name}")
                 temp_video = self._generate_from_image(
@@ -128,7 +103,7 @@ class SceneGenerator:
                 )
             else:
                 # メディアなし：黒画面
-                print("  黒画面動画を生成")
+                print(f"  黒画面動画を生成")
                 temp_video = self._generate_blank_video(
                     duration,
                     width,
@@ -137,12 +112,12 @@ class SceneGenerator:
                 )
 
             if not temp_video:
-                print("  ✗ 基本動画生成失敗")
+                print(f"  ✗ 基本動画生成失敗")
                 return False
             print(f"  ✓ 基本動画生成完了: {Path(temp_video).name}")
 
             # ステップ2: 字幕を焼き込み
-            print("\n[2/3] 字幕処理...")
+            print(f"\n[2/3] 字幕処理...")
             temp_with_subtitle = None
             if scene.has_subtitle:
                 print(f"  字幕を焼き込み: '{scene.subtitle_text}'")
@@ -153,25 +128,26 @@ class SceneGenerator:
                     height
                 )
                 if temp_with_subtitle:
-                    Path(temp_video).unlink()
+                    Path(temp_video).unlink()  # 一時ファイル削除
                     temp_video = temp_with_subtitle
-                    print("  ✓ 字幕焼き込み完了")
+                    print(f"  ✓ 字幕焼き込み完了")
                 else:
-                    print("  ✗ 字幕焼き込み失敗")
+                    print(f"  ✗ 字幕焼き込み失敗")
             else:
-                print("  字幕なし（スキップ）")
+                print(f"  字幕なし（スキップ）")
 
             # ステップ3: 音声を合成
-            print("\n[3/3] 音声処理...")
+            print(f"\n[3/3] 音声処理...")
             if audio_path:
                 print(f"  音声ファイル: {Path(audio_path).name}")
                 success = self._add_audio(temp_video, audio_path, output_path)
                 if success:
-                    print("  ✓ 音声合成完了")
+                    print(f"  ✓ 音声合成完了")
                 else:
-                    print("  ✗ 音声合成失敗")
+                    print(f"  ✗ 音声合成失敗")
             else:
-                print("  音声なし（動画のみコピー）")
+                # 音声なし：そのままコピー
+                print(f"  音声なし（動画のみコピー）")
                 import shutil
                 shutil.copy(temp_video, output_path)
                 success = True
@@ -183,7 +159,7 @@ class SceneGenerator:
             if success:
                 print(f"\n✓ シーン動画生成完了: {Path(output_path).name}")
             else:
-                print("\n✗ シーン動画生成失敗")
+                print(f"\n✗ シーン動画生成失敗")
 
             return success
 
@@ -203,6 +179,15 @@ class SceneGenerator:
     ) -> Optional[str]:
         """
         画像から動画を生成
+
+        Args:
+            image_path: 画像ファイルパス
+            duration: 長さ（秒）
+            width, height: 解像度
+            fps: フレームレート
+
+        Returns:
+            生成された一時動画ファイルパス、失敗時はNone
         """
         temp_file = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         temp_path = temp_file.name
@@ -212,10 +197,7 @@ class SceneGenerator:
             "-loop", "1",
             "-i", image_path,
             "-t", str(duration),
-            "-vf", (
-                f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
-            ),
+            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-r", str(fps),
@@ -225,9 +207,10 @@ class SceneGenerator:
 
         if self.ffmpeg.run_command(args):
             return temp_path
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
-        return None
+        else:
+            if Path(temp_path).exists():
+                Path(temp_path).unlink()
+            return None
 
     def _generate_from_video(
         self,
@@ -239,6 +222,15 @@ class SceneGenerator:
     ) -> Optional[str]:
         """
         動画を指定長さにトリミング・リサイズ
+
+        Args:
+            video_path: 動画ファイルパス
+            duration: 長さ（秒）
+            width, height: 解像度
+            fps: フレームレート
+
+        Returns:
+            生成された一時動画ファイルパス、失敗時はNone
         """
         temp_file = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         temp_path = temp_file.name
@@ -247,23 +239,21 @@ class SceneGenerator:
         args = [
             "-i", video_path,
             "-t", str(duration),
-            "-vf", (
-                f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
-            ),
+            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-r", str(fps),
-            "-an",
+            "-an",  # 音声なし（後で合成）
             "-y",
             temp_path
         ]
 
         if self.ffmpeg.run_command(args):
             return temp_path
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
-        return None
+        else:
+            if Path(temp_path).exists():
+                Path(temp_path).unlink()
+            return None
 
     def _generate_blank_video(
         self,
@@ -274,6 +264,14 @@ class SceneGenerator:
     ) -> Optional[str]:
         """
         黒画面動画を生成
+
+        Args:
+            duration: 長さ（秒）
+            width, height: 解像度
+            fps: フレームレート
+
+        Returns:
+            生成された一時動画ファイルパス、失敗時はNone
         """
         temp_file = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         temp_path = temp_file.name
@@ -290,9 +288,10 @@ class SceneGenerator:
 
         if self.ffmpeg.run_command(args):
             return temp_path
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
-        return None
+        else:
+            if Path(temp_path).exists():
+                Path(temp_path).unlink()
+            return None
 
     def _add_subtitle(
         self,
@@ -303,33 +302,33 @@ class SceneGenerator:
     ) -> Optional[str]:
         """
         字幕を焼き込み
+
+        Args:
+            video_path: 元動画ファイルパス
+            subtitle_text: 字幕テキスト
+            width, height: 解像度
+
+        Returns:
+            字幕付き一時動画ファイルパス、失敗時はNone
         """
         temp_file = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         temp_path = temp_file.name
         temp_file.close()
 
+        # 字幕エリアの高さ（画面の10%）
         subtitle_height = int(height * 0.10)
         subtitle_y = height - subtitle_height
+
+        # フォントサイズ（高さに応じて調整）
         font_size = int(height * 0.035)
 
-        subtitle_file = tempfile.NamedTemporaryFile(
-            suffix=".txt",
-            delete=False,
-            mode="w",
-            encoding="utf-8"
-        )
-        subtitle_file.write(subtitle_text)
-        subtitle_file.flush()
-        subtitle_file.close()
+        # エスケープ処理
+        escaped_text = subtitle_text.replace(':', r'\:').replace("'", r"\'")
 
-        escaped_font_path = self._format_font_path(self.font_path)
-        escaped_subtitle_path = self._escape_filter_value(
-            Path(subtitle_file.name).as_posix()
-        )
-
+        # drawboxで黒背景、drawtextで白文字
         filter_complex = (
             f"drawbox=x=0:y={subtitle_y}:w={width}:h={subtitle_height}:color=black@0.7:t=fill,"
-            f"drawtext=fontfile='{escaped_font_path}':textfile='{escaped_subtitle_path}':"
+            f"drawtext=fontfile='{self.font_path}':text='{escaped_text}':"
             f"fontcolor=white:fontsize={font_size}:x=(w-text_w)/2:y={subtitle_y}+(h-{subtitle_y}-text_h)/2"
         )
 
@@ -343,17 +342,12 @@ class SceneGenerator:
             temp_path
         ]
 
-        try:
-            if self.ffmpeg.run_command(args):
-                return temp_path
-        finally:
-            subtitle_path = Path(subtitle_file.name)
-            if subtitle_path.exists():
-                subtitle_path.unlink()
-
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
-        return None
+        if self.ffmpeg.run_command(args):
+            return temp_path
+        else:
+            if Path(temp_path).exists():
+                Path(temp_path).unlink()
+            return None
 
     def _add_audio(
         self,
@@ -363,7 +357,18 @@ class SceneGenerator:
     ) -> bool:
         """
         動画に音声を合成
+
+        Args:
+            video_path: 動画ファイルパス
+            audio_path: 音声ファイルパス
+            output_path: 出力先mp4ファイルパス
+
+        Returns:
+            成功したらTrue
         """
+        from pathlib import Path
+
+        # ファイル存在確認
         if not Path(video_path).exists():
             print(f"エラー: 動画ファイルが見つかりません: {video_path}")
             return False
@@ -372,9 +377,7 @@ class SceneGenerator:
             print(f"エラー: 音声ファイルが見つかりません: {audio_path}")
             return False
 
-        print(
-            f"音声合成: {Path(video_path).name} + {Path(audio_path).name} -> {Path(output_path).name}"
-        )
+        print(f"音声合成: {Path(video_path).name} + {Path(audio_path).name} -> {Path(output_path).name}")
 
         args = [
             "-i", video_path,
@@ -393,6 +396,6 @@ class SceneGenerator:
         if success:
             print(f"✓ 音声合成完了: {Path(output_path).name}")
         else:
-            print("✗ 音声合成失敗")
+            print(f"✗ 音声合成失敗")
 
         return success
