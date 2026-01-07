@@ -20,7 +20,7 @@ from typing import Optional
 from ..project import Project, Scene, MediaType, DurationMode
 from ..voicevox import VoiceVoxClient, AudioCache
 from ..video import FFmpegWrapper, SceneGenerator, VideoComposer
-from .theme import get_stylesheet, COLOR_PALETTE, SPACING
+from .theme import get_stylesheet, COLOR_PALETTE, SPACING, RADIUS
 
 
 class VideoGenerationThread(QThread):
