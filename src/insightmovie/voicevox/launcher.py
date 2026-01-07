@@ -106,6 +106,9 @@ class EngineLauncher:
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
             self._pid = self._process.pid
