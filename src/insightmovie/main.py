@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QApplication, QDialog
 from .core import Config
 from .voicevox import VoiceVoxClient, EngineLauncher
 from .setup_wizard import SetupWizard
-from .ui import MainWindow
+from .ui import ProjectWindow
+from .video import FFmpegWrapper
 
 
 def main():
@@ -55,8 +56,18 @@ def main():
             if engine_info:
                 config.engine_url = engine_info.base_url
 
+    # ffmpeg検出
+    try:
+        ffmpeg = FFmpegWrapper()
+    except Exception as e:
+        print(f"ffmpeg警告: {e}")
+        ffmpeg = None
+
+    # デフォルト話者ID取得
+    speaker_id = config.default_speaker_id or 13  # 青山龍星
+
     # メインウィンドウ表示
-    window = MainWindow(config, client)
+    window = ProjectWindow(client, speaker_id, ffmpeg)
     window.show()
 
     return app.exec()
