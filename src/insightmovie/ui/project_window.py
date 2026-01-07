@@ -275,7 +275,7 @@ class ProjectWindow(QMainWindow):
 
         layout.addLayout(header_layout)
 
-        # メインスプリッター
+        # メインスプリッター（縦方向に伸縮）
         splitter = QSplitter(Qt.Horizontal)
 
         # 左側：シーン一覧
@@ -289,23 +289,27 @@ class ProjectWindow(QMainWindow):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
-        layout.addWidget(splitter)
+        # スプリッターのみ伸縮するように設定
+        layout.addWidget(splitter, 1)  # stretch factor = 1
 
-        # 下部：書き出しエリア
+        # 下部：書き出しエリア（固定サイズ）
         export_panel = self.create_export_panel()
-        layout.addWidget(export_panel)
+        layout.addWidget(export_panel, 0)  # stretch factor = 0
 
-        # 進捗バー
+        # 進捗バー（固定サイズ）
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
+        layout.addWidget(self.progress_bar, 0)  # stretch factor = 0
 
-        # ログ
+        # ログ（固定サイズ）
+        log_label = QLabel("ログ:")
+        layout.addWidget(log_label, 0)  # stretch factor = 0
+
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
-        self.log_text.setMaximumHeight(100)
-        layout.addWidget(QLabel("ログ:"))
-        layout.addWidget(self.log_text)
+        self.log_text.setMaximumHeight(60)  # 100px → 60pxに縮小
+        self.log_text.setMinimumHeight(60)  # 最小高さも固定
+        layout.addWidget(self.log_text, 0)  # stretch factor = 0
 
         central_widget.setLayout(layout)
 
@@ -461,6 +465,18 @@ class ProjectWindow(QMainWindow):
         )
         self.narration_edit.setMaximumHeight(100)
         self.narration_edit.setMinimumHeight(80)
+        # グレーの枠を明確にするため、ボーダーを濃くする
+        self.narration_edit.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {COLOR_PALETTE['bg_input']};
+                border: 2px solid {COLOR_PALETTE['border_dark']};
+                border-radius: {RADIUS['default']}px;
+                padding: {SPACING['sm']}px;
+            }}
+            QTextEdit:focus {{
+                border: 2px solid {COLOR_PALETTE['brand_primary']};
+            }}
+        """)
         self.narration_edit.textChanged.connect(self.on_narration_changed)
         narration_layout.addWidget(self.narration_edit)
 
