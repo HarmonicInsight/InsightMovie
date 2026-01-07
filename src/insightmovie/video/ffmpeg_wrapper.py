@@ -128,7 +128,15 @@ class FFmpegWrapper:
 
         try:
             if show_output:
-                result = subprocess.run(cmd, check=True)
+                print(f"\nffmpegコマンド実行:")
+                print(f"  {' '.join([str(arg) for arg in cmd[:5]])} ... ({len(cmd)}個の引数)")
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+                if result.stdout:
+                    print(f"stdout: {result.stdout[:200]}")
+                if result.stderr:
+                    # ffmpegは情報をstderrに出力するので、エラーでなければ表示しない
+                    if result.returncode != 0:
+                        print(f"stderr: {result.stderr[:500]}")
             else:
                 result = subprocess.run(
                     cmd,
@@ -138,12 +146,19 @@ class FFmpegWrapper:
                 )
             return result.returncode == 0
         except subprocess.CalledProcessError as e:
-            print(f"ffmpegエラー: {e}")
+            print(f"\n✗ ffmpegエラー (終了コード: {e.returncode})")
+            print(f"コマンド: {' '.join([str(arg) for arg in cmd[:10]])}")
             if hasattr(e, 'stderr') and e.stderr:
-                print(f"エラー詳細: {e.stderr}")
+                print(f"エラー詳細:")
+                print(e.stderr[-1000:])  # 最後の1000文字を表示
+            if hasattr(e, 'stdout') and e.stdout:
+                print(f"出力:")
+                print(e.stdout[-500:])
             return False
         except Exception as e:
-            print(f"実行エラー: {e}")
+            print(f"\n✗ 実行エラー: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def get_video_info(self, video_path: str) -> Optional[dict]:

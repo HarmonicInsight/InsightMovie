@@ -68,6 +68,13 @@ class SceneGenerator:
             成功したらTrue
         """
         try:
+            print(f"\n=== シーン動画生成開始 ===")
+            print(f"  出力: {Path(output_path).name}")
+            print(f"  長さ: {duration}秒")
+            print(f"  解像度: {resolution}")
+            print(f"  字幕: {scene.subtitle_text if scene.has_subtitle else 'なし'}")
+            print(f"  音声: {'あり' if audio_path else 'なし'}")
+
             # 解像度をパース
             width, height = map(int, resolution.split('x'))
 
@@ -75,7 +82,9 @@ class SceneGenerator:
             temp_video = None
 
             # ステップ1: メディアから基本動画を生成
+            print(f"\n[1/3] 基本動画生成...")
             if scene.has_media and scene.media_type == MediaType.IMAGE:
+                print(f"  画像から動画を生成: {Path(scene.media_path).name}")
                 temp_video = self._generate_from_image(
                     scene.media_path,
                     duration,
@@ -84,6 +93,7 @@ class SceneGenerator:
                     fps
                 )
             elif scene.has_media and scene.media_type == MediaType.VIDEO:
+                print(f"  動画をトリミング: {Path(scene.media_path).name}")
                 temp_video = self._generate_from_video(
                     scene.media_path,
                     duration,
@@ -93,6 +103,7 @@ class SceneGenerator:
                 )
             else:
                 # メディアなし：黒画面
+                print(f"  黒画面動画を生成")
                 temp_video = self._generate_blank_video(
                     duration,
                     width,
@@ -101,11 +112,15 @@ class SceneGenerator:
                 )
 
             if not temp_video:
+                print(f"  ✗ 基本動画生成失敗")
                 return False
+            print(f"  ✓ 基本動画生成完了: {Path(temp_video).name}")
 
             # ステップ2: 字幕を焼き込み
+            print(f"\n[2/3] 字幕処理...")
             temp_with_subtitle = None
             if scene.has_subtitle:
+                print(f"  字幕を焼き込み: '{scene.subtitle_text}'")
                 temp_with_subtitle = self._add_subtitle(
                     temp_video,
                     scene.subtitle_text,
@@ -115,12 +130,24 @@ class SceneGenerator:
                 if temp_with_subtitle:
                     Path(temp_video).unlink()  # 一時ファイル削除
                     temp_video = temp_with_subtitle
+                    print(f"  ✓ 字幕焼き込み完了")
+                else:
+                    print(f"  ✗ 字幕焼き込み失敗")
+            else:
+                print(f"  字幕なし（スキップ）")
 
             # ステップ3: 音声を合成
+            print(f"\n[3/3] 音声処理...")
             if audio_path:
+                print(f"  音声ファイル: {Path(audio_path).name}")
                 success = self._add_audio(temp_video, audio_path, output_path)
+                if success:
+                    print(f"  ✓ 音声合成完了")
+                else:
+                    print(f"  ✗ 音声合成失敗")
             else:
                 # 音声なし：そのままコピー
+                print(f"  音声なし（動画のみコピー）")
                 import shutil
                 shutil.copy(temp_video, output_path)
                 success = True
@@ -129,10 +156,17 @@ class SceneGenerator:
             if Path(temp_video).exists():
                 Path(temp_video).unlink()
 
+            if success:
+                print(f"\n✓ シーン動画生成完了: {Path(output_path).name}")
+            else:
+                print(f"\n✗ シーン動画生成失敗")
+
             return success
 
         except Exception as e:
             print(f"シーン生成エラー: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _generate_from_image(

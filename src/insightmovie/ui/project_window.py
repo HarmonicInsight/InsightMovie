@@ -58,7 +58,10 @@ class VideoGenerationThread(QThread):
 
             # 各シーンを生成
             for i, scene in enumerate(self.project.scenes, 1):
+                self.progress.emit(f"\n{'='*50}")
                 self.progress.emit(f"シーン {i}/{len(self.project.scenes)} を処理中...")
+                self.progress.emit(f"  ナレーション: {scene.narration_text[:50] if scene.has_narration else 'なし'}")
+                self.progress.emit(f"  字幕: {scene.subtitle_text if scene.has_subtitle else 'なし'}")
 
                 # 音声生成
                 audio_path = None
@@ -77,27 +80,38 @@ class VideoGenerationThread(QThread):
                             scene.narration_text,
                             self.speaker_id
                         )
+                        self.progress.emit(f"  ✓ 音声取得: {Path(audio_path).name} ({duration:.2f}秒)")
                     else:
                         # 新規生成
-                        self.progress.emit(f"  音声を生成中...")
+                        self.progress.emit(f"  音声を生成中（VOICEVOX）...")
                         audio_data = self.voicevox.generate_audio(
                             scene.narration_text,
                             self.speaker_id
                         )
+                        if not audio_data:
+                            self.progress.emit(f"  ✗ 音声生成失敗")
+                            self.finished.emit(False, "音声生成に失敗しました")
+                            return
+
                         audio_path = self.audio_cache.save(
                             scene.narration_text,
                             self.speaker_id,
                             audio_data
                         )
                         duration = AudioCache.get_audio_duration_from_bytes(audio_data)
+                        self.progress.emit(f"  ✓ 音声生成完了: {Path(audio_path).name} ({duration:.2f}秒)")
 
                     if scene.duration_mode == DurationMode.AUTO:
                         # 音声長に合わせる
                         if duration:
                             scene.fixed_seconds = duration
+                            self.progress.emit(f"  シーン長さを音声に合わせる: {duration:.2f}秒")
                     else:
                         # 固定長使用
                         duration = scene.fixed_seconds
+                        self.progress.emit(f"  固定長を使用: {duration:.2f}秒")
+                else:
+                    self.progress.emit(f"  ナレーションなし（音声スキップ）")
 
                 # シーン動画生成
                 self.progress.emit(f"  動画を生成中...")
