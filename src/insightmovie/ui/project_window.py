@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QListWidget, QListWidgetItem, QTextEdit,
     QLineEdit, QFileDialog, QMessageBox, QProgressBar, QGroupBox,
-    QComboBox, QSpinBox, QDoubleSpinBox
+    QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QButtonGroup,
+    QGridLayout, QFrame
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize
 from PySide6.QtGui import QPixmap, QIcon
@@ -66,6 +67,7 @@ class VideoGenerationThread(QThread):
                 # 音声生成
                 audio_path = None
                 duration = scene.fixed_seconds  # デフォルト
+                total_duration = scene.fixed_seconds  # シーンの長さ（無音含む）
 
                 if scene.has_narration:
                     # キャッシュチェック
@@ -101,17 +103,22 @@ class VideoGenerationThread(QThread):
                         duration = AudioCache.get_audio_duration_from_bytes(audio_data)
                         self.progress.emit(f"  ✓ 音声生成完了: {Path(audio_path).name} ({duration:.2f}秒)")
 
+                    # 前後に無音パディングを追加するため+2秒
+                    silence_padding = 2.0  # 前後1秒ずつ
+
                     if scene.duration_mode == DurationMode.AUTO:
-                        # 音声長に合わせる
+                        # 音声長に合わせる（+無音パディング）
                         if duration:
-                            scene.fixed_seconds = duration
-                            self.progress.emit(f"  シーン長さを音声に合わせる: {duration:.2f}秒")
+                            total_duration = duration + silence_padding
+                            scene.fixed_seconds = total_duration
+                            self.progress.emit(f"  シーン長さを音声に合わせる: {duration:.2f}秒 + 無音{silence_padding}秒 = {total_duration:.2f}秒")
                     else:
                         # 固定長使用
-                        duration = scene.fixed_seconds
-                        self.progress.emit(f"  固定長を使用: {duration:.2f}秒")
+                        total_duration = scene.fixed_seconds
+                        self.progress.emit(f"  固定長を使用: {total_duration:.2f}秒")
                 else:
                     self.progress.emit(f"  ナレーションなし（音声スキップ）")
+                    total_duration = scene.fixed_seconds
 
                 # シーン動画生成
                 self.progress.emit(f"  動画を生成中...")
@@ -125,7 +132,7 @@ class VideoGenerationThread(QThread):
                 success = generator.generate_scene(
                     scene,
                     str(scene_video_path),
-                    duration or scene.fixed_seconds,
+                    total_duration,
                     self.project.output.resolution,
                     self.project.output.fps,
                     str(audio_path) if audio_path else None
@@ -187,8 +194,9 @@ class ProjectWindow(QMainWindow):
         self.project = Project()
         self.current_scene: Optional[Scene] = None
         self.generation_thread: Optional[VideoGenerationThread] = None
+        self.speaker_styles: dict = {}  # 話者選択用
 
-        self.setWindowTitle("InsightMovie - 動画自動生成")
+        self.setWindowTitle("InsightMovie - 新規プロジェクト")
         self.setMinimumSize(1100, 700)
         self.resize(1300, 900)  # 初期サイズ（リサイズ可能）
 
@@ -229,6 +237,27 @@ class ProjectWindow(QMainWindow):
         header_layout.addWidget(version_label)
 
         header_layout.addStretch()
+
+        # プロジェクト操作ボタン
+        new_btn = QPushButton("新規")
+        new_btn.setProperty("class", "secondary")
+        new_btn.clicked.connect(self.new_project)
+        header_layout.addWidget(new_btn)
+
+        open_btn = QPushButton("開く")
+        open_btn.setProperty("class", "secondary")
+        open_btn.clicked.connect(self.open_project)
+        header_layout.addWidget(open_btn)
+
+        save_btn = QPushButton("保存")
+        save_btn.setProperty("class", "secondary")
+        save_btn.clicked.connect(self.save_project)
+        header_layout.addWidget(save_btn)
+
+        save_as_btn = QPushButton("名前を付けて保存")
+        save_as_btn.setProperty("class", "secondary")
+        save_as_btn.clicked.connect(self.save_project_as)
+        header_layout.addWidget(save_as_btn)
 
         # ステータス
         voicevox_status = "✓ 接続OK" if self.voicevox.check_connection() else "✗ 未接続"
@@ -345,6 +374,61 @@ class ProjectWindow(QMainWindow):
         media_layout.addStretch()
         layout.addLayout(media_layout)
 
+        # プレビューコンテナ（画像と字幕オーバーレイを重ねる）
+        self.preview_container = QFrame()
+        self.preview_container.setFixedSize(160, 284)  # 9:16比率
+        self.preview_container.setStyleSheet(f"""
+            QFrame {{
+                background-color: #1a1a2e;
+                border: 1px solid {COLOR_PALETTE['border_default']};
+                border-radius: 4px;
+            }}
+        """)
+
+        # コンテナ内のレイアウト（QGridLayoutで重ねる）
+        preview_layout = QGridLayout(self.preview_container)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(0)
+
+        # 画像表示用ラベル（背面）
+        self.thumbnail_label = QLabel()
+        self.thumbnail_label.setAlignment(Qt.AlignCenter)
+        self.thumbnail_label.setStyleSheet(f"""
+            background-color: transparent;
+            color: {COLOR_PALETTE['text_muted']};
+            border: none;
+        """)
+        preview_layout.addWidget(self.thumbnail_label, 0, 0)
+
+        # プレースホルダーラベル（素材未設定時に表示）
+        self.placeholder_label = QLabel("素材未設定\n\n画像/動画を\n選択してください")
+        self.placeholder_label.setAlignment(Qt.AlignCenter)
+        self.placeholder_label.setStyleSheet(f"""
+            background-color: transparent;
+            color: {COLOR_PALETTE['text_muted']};
+            font-size: 9pt;
+            border: none;
+        """)
+        preview_layout.addWidget(self.placeholder_label, 0, 0)
+
+        # 字幕オーバーレイ（前面、下端に固定）
+        self.subtitle_overlay = QLabel()
+        self.subtitle_overlay.setAlignment(Qt.AlignCenter)
+        self.subtitle_overlay.setWordWrap(True)
+        self.subtitle_overlay.setStyleSheet("""
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 8pt;
+            padding: 4px 6px;
+            border: none;
+            border-radius: 0px;
+        """)
+        self.subtitle_overlay.setMaximumHeight(40)
+        self.subtitle_overlay.hide()  # 初期状態は非表示（字幕がない時）
+        preview_layout.addWidget(self.subtitle_overlay, 0, 0, Qt.AlignBottom)
+
+        layout.addWidget(self.preview_container)
+
         # 説明文（ナレーション）
         layout.addWidget(QLabel("説明文（ナレーション）:"))
         self.narration_edit = QTextEdit()
@@ -357,25 +441,34 @@ class ProjectWindow(QMainWindow):
         layout.addWidget(self.narration_edit)
 
         # 字幕
-        layout.addWidget(QLabel("字幕:"))
+        subtitle_layout = QHBoxLayout()
+        subtitle_layout.addWidget(QLabel("字幕:"))
+
         self.subtitle_edit = QLineEdit()
         self.subtitle_edit.setPlaceholderText("画面下部に表示される字幕（空欄OK）")
         self.subtitle_edit.textChanged.connect(self.on_subtitle_changed)
-        layout.addWidget(self.subtitle_edit)
+        subtitle_layout.addWidget(self.subtitle_edit)
+
+        layout.addLayout(subtitle_layout)
 
         # 長さ設定
         duration_layout = QHBoxLayout()
         duration_layout.addWidget(QLabel("シーンの長さ:"))
 
-        self.duration_combo = QComboBox()
-        self.duration_combo.addItems(["自動（音声に合わせる）", "固定秒数"])
-        self.duration_combo.currentIndexChanged.connect(self.on_duration_mode_changed)
-        duration_layout.addWidget(self.duration_combo)
+        # ラジオボタン
+        self.duration_auto_radio = QRadioButton("自動（音声に合わせる）")
+        self.duration_auto_radio.setChecked(True)  # デフォルトは自動
+        self.duration_auto_radio.toggled.connect(self.on_duration_mode_changed)
+        duration_layout.addWidget(self.duration_auto_radio)
+
+        self.duration_fixed_radio = QRadioButton("固定秒数")
+        duration_layout.addWidget(self.duration_fixed_radio)
 
         self.fixed_seconds_spin = QDoubleSpinBox()
         self.fixed_seconds_spin.setRange(0.1, 60.0)
         self.fixed_seconds_spin.setValue(3.0)
         self.fixed_seconds_spin.setSuffix(" 秒")
+        self.fixed_seconds_spin.setEnabled(False)  # デフォルトは無効
         self.fixed_seconds_spin.valueChanged.connect(self.on_fixed_seconds_changed)
         duration_layout.addWidget(self.fixed_seconds_spin)
 
@@ -389,8 +482,16 @@ class ProjectWindow(QMainWindow):
 
     def create_export_panel(self) -> QWidget:
         """書き出しパネル作成"""
-        panel = QGroupBox("書き出し")
+        panel = QGroupBox("書き出し設定")
         layout = QHBoxLayout()
+
+        # 話者選択
+        layout.addWidget(QLabel("話者:"))
+        self.speaker_combo = QComboBox()
+        self.speaker_combo.setMinimumWidth(200)
+        self.load_speakers()
+        self.speaker_combo.currentIndexChanged.connect(self.on_speaker_changed)
+        layout.addWidget(self.speaker_combo)
 
         # 解像度
         layout.addWidget(QLabel("解像度:"))
@@ -411,15 +512,15 @@ class ProjectWindow(QMainWindow):
         layout.addStretch()
 
         # 書き出しボタン
-        export_btn = QPushButton("📹 動画を書き出し")
+        export_btn = QPushButton("動画を書き出し")
         export_btn.setProperty("class", "success")
-        export_btn.setMinimumWidth(180)
+        export_btn.setMinimumWidth(150)
         export_btn.setMinimumHeight(44)
-        export_btn.setStyleSheet(f"""
-            QPushButton {{
+        export_btn.setStyleSheet("""
+            QPushButton {
                 font-size: 12pt;
                 font-weight: 600;
-            }}
+            }
         """)
         export_btn.clicked.connect(self.export_video)
         layout.addWidget(export_btn)
@@ -427,11 +528,61 @@ class ProjectWindow(QMainWindow):
         panel.setLayout(layout)
         return panel
 
+    def load_speakers(self):
+        """VOICEVOX話者一覧を読み込み"""
+        self.speaker_combo.clear()
+        self.speaker_styles = {}  # {表示名: style_id}
+
+        try:
+            speakers = self.voicevox.get_speakers()
+
+            for speaker in speakers:
+                speaker_name = speaker.get("name", "不明")
+                for style in speaker.get("styles", []):
+                    style_name = style.get("name", "ノーマル")
+                    style_id = style.get("id")
+
+                    if style_name == "ノーマル":
+                        display_name = speaker_name
+                    else:
+                        display_name = f"{speaker_name} ({style_name})"
+
+                    self.speaker_styles[display_name] = style_id
+                    self.speaker_combo.addItem(display_name)
+
+            # 現在のspeaker_idを選択状態にする
+            for display_name, style_id in self.speaker_styles.items():
+                if style_id == self.speaker_id:
+                    index = self.speaker_combo.findText(display_name)
+                    if index >= 0:
+                        self.speaker_combo.setCurrentIndex(index)
+                    break
+
+        except Exception as e:
+            self.speaker_combo.addItem("(話者取得失敗)")
+            self.log(f"話者一覧の取得に失敗: {e}")
+
+    def on_speaker_changed(self, index: int):
+        """話者選択変更時"""
+        display_name = self.speaker_combo.currentText()
+        if display_name in self.speaker_styles:
+            self.speaker_id = self.speaker_styles[display_name]
+            self.log(f"話者を変更: {display_name}")
+
     def load_scene_list(self):
         """シーン一覧を読み込み"""
         self.scene_list.clear()
         for i, scene in enumerate(self.project.scenes, 1):
-            item = QListWidgetItem(f"シーン {i}")
+            # 画像設定状況を表示
+            if scene.media_path:
+                media_name = Path(scene.media_path).name
+                # ファイル名が長い場合は省略
+                if len(media_name) > 15:
+                    media_name = media_name[:12] + "..."
+                item_text = f"シーン {i}: {media_name}"
+            else:
+                item_text = f"シーン {i}: (未設定)"
+            item = QListWidgetItem(item_text)
             item.setData(Qt.UserRole, scene.id)
             self.scene_list.addItem(item)
 
@@ -457,8 +608,13 @@ class ProjectWindow(QMainWindow):
         # 素材
         if self.current_scene.media_path:
             self.media_label.setText(Path(self.current_scene.media_path).name)
+            # サムネイル表示
+            self.load_thumbnail(self.current_scene.media_path)
+            self.placeholder_label.hide()
         else:
             self.media_label.setText("未設定")
+            self.thumbnail_label.setPixmap(QPixmap())
+            self.placeholder_label.show()
 
         # 説明文
         self.narration_edit.blockSignals(True)
@@ -470,11 +626,20 @@ class ProjectWindow(QMainWindow):
         self.subtitle_edit.setText(self.current_scene.subtitle_text)
         self.subtitle_edit.blockSignals(False)
 
-        # 長さモード
-        mode_index = 0 if self.current_scene.duration_mode == DurationMode.AUTO else 1
-        self.duration_combo.blockSignals(True)
-        self.duration_combo.setCurrentIndex(mode_index)
-        self.duration_combo.blockSignals(False)
+        # 字幕プレビュー更新
+        self.update_subtitle_preview()
+
+        # 長さモード（ラジオボタン）
+        self.duration_auto_radio.blockSignals(True)
+        self.duration_fixed_radio.blockSignals(True)
+
+        if self.current_scene.duration_mode == DurationMode.AUTO:
+            self.duration_auto_radio.setChecked(True)
+        else:
+            self.duration_fixed_radio.setChecked(True)
+
+        self.duration_auto_radio.blockSignals(False)
+        self.duration_fixed_radio.blockSignals(False)
 
         self.fixed_seconds_spin.blockSignals(True)
         self.fixed_seconds_spin.setValue(self.current_scene.fixed_seconds)
@@ -508,6 +673,7 @@ class ProjectWindow(QMainWindow):
                 self.current_scene.media_type = MediaType.NONE
 
             self.load_scene_data()
+            self.update_scene_list_item()
             self.log(f"素材を設定: {Path(file_path).name}")
 
     def clear_media(self):
@@ -518,7 +684,62 @@ class ProjectWindow(QMainWindow):
         self.current_scene.media_path = None
         self.current_scene.media_type = MediaType.NONE
         self.load_scene_data()
+        self.update_scene_list_item()
         self.log("素材をクリアしました")
+
+    def update_scene_list_item(self):
+        """現在選択中のシーン一覧アイテムを更新"""
+        current_row = self.scene_list.currentRow()
+        if current_row < 0 or not self.current_scene:
+            return
+
+        # 画像設定状況を表示
+        if self.current_scene.media_path:
+            media_name = Path(self.current_scene.media_path).name
+            if len(media_name) > 15:
+                media_name = media_name[:12] + "..."
+            item_text = f"シーン {current_row + 1}: {media_name}"
+        else:
+            item_text = f"シーン {current_row + 1}: (未設定)"
+
+        self.scene_list.currentItem().setText(item_text)
+
+    def load_thumbnail(self, media_path: str):
+        """サムネイルを読み込み表示"""
+        try:
+            path = Path(media_path)
+            ext = path.suffix.lower()
+
+            if ext in ['.png', '.jpg', '.jpeg', '.webp']:
+                # 画像の場合は直接読み込み
+                pixmap = QPixmap(str(path))
+                if not pixmap.isNull():
+                    # 枠内に収まるよう縮小（アスペクト比維持、全体表示）
+                    target_size = QSize(158, 282)  # border分を考慮
+                    scaled = pixmap.scaled(
+                        target_size,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+                    self.thumbnail_label.setPixmap(scaled)
+                    self.placeholder_label.hide()
+                else:
+                    self.thumbnail_label.setPixmap(QPixmap())
+                    self.placeholder_label.setText("読み込み\nエラー")
+                    self.placeholder_label.show()
+            elif ext in ['.mp4', '.mov', '.avi']:
+                # 動画の場合はプレースホルダー表示
+                self.thumbnail_label.setPixmap(QPixmap())
+                self.placeholder_label.setText("動画\n(プレビュー非対応)")
+                self.placeholder_label.show()
+            else:
+                self.thumbnail_label.setPixmap(QPixmap())
+                self.placeholder_label.setText("プレビュー\nなし")
+                self.placeholder_label.show()
+        except Exception as e:
+            self.thumbnail_label.setPixmap(QPixmap())
+            self.placeholder_label.setText(f"エラー\n{str(e)[:20]}")
+            self.placeholder_label.show()
 
     def on_narration_changed(self):
         """説明文変更時"""
@@ -531,13 +752,80 @@ class ProjectWindow(QMainWindow):
         if not self.current_scene:
             return
         self.current_scene.subtitle_text = self.subtitle_edit.text()
+        self.update_subtitle_preview()
 
-    def on_duration_mode_changed(self, index: int):
+    def update_subtitle_preview(self):
+        """字幕プレビューを更新"""
+        # シーン未選択または字幕が空の場合は非表示
+        if not self.current_scene or not self.current_scene.subtitle_text:
+            self.subtitle_overlay.hide()
+            return
+
+        subtitle = self.current_scene.subtitle_text
+
+        # 文字数に応じて警告色を変更
+        char_count = len(subtitle)
+        max_chars_per_line = 18  # 動画と同じ設定
+        max_total = 36  # 2行で収まる目安
+
+        if char_count > max_total:
+            # 長すぎる場合は赤背景で警告
+            bg_color = "rgba(180, 50, 50, 0.9)"
+            display_text = f"{subtitle[:32]}...\n({char_count}文字)"
+        elif char_count > max_chars_per_line:
+            # 2行になる場合（動画と同じ分割ロジック）
+            bg_color = "rgba(0, 0, 0, 0.7)"
+            display_text = self._split_subtitle_for_preview(subtitle, max_chars_per_line)
+        else:
+            # 1行で収まる
+            bg_color = "rgba(0, 0, 0, 0.7)"
+            display_text = subtitle
+
+        self.subtitle_overlay.setText(display_text)
+        self.subtitle_overlay.setStyleSheet(f"""
+            background-color: {bg_color};
+            color: white;
+            font-size: 8pt;
+            padding: 4px 6px;
+            border: none;
+        """)
+        self.subtitle_overlay.show()  # 字幕がある時のみ表示
+
+    def _split_subtitle_for_preview(self, text: str, max_chars: int = 18) -> str:
+        """字幕テキストを分割（プレビュー用、動画生成と同じロジック）"""
+        if len(text) <= max_chars:
+            return text
+
+        mid = len(text) // 2
+        split_pos = mid
+
+        for offset in range(6):
+            pos = mid + offset
+            if pos < len(text) and text[pos] in ' 、。，．！？':
+                split_pos = pos + 1
+                break
+            pos = mid - offset
+            if pos > 0 and text[pos] in ' 、。，．！？':
+                split_pos = pos + 1
+                break
+
+        line1 = text[:split_pos].strip()
+        line2 = text[split_pos:].strip()
+
+        if line2:
+            return f"{line1}\n{line2}"
+        return line1
+
+    def on_duration_mode_changed(self, checked: bool):
         """長さモード変更時"""
         if not self.current_scene:
             return
 
-        if index == 0:
+        # ラジオボタンのtoggledは両方のボタンで発火するため、checkedがTrueの時のみ処理
+        if not checked:
+            return
+
+        if self.duration_auto_radio.isChecked():
             self.current_scene.duration_mode = DurationMode.AUTO
             self.fixed_seconds_spin.setEnabled(False)
         else:
@@ -643,14 +931,17 @@ class ProjectWindow(QMainWindow):
         if not self.project.output.output_path:
             return
 
-        output_dir = Path(self.project.output.output_path).parent
+        output_path = Path(self.project.output.output_path)
+        output_dir = output_path.parent
 
         try:
             if platform.system() == "Windows":
                 # Windowsの場合、エクスプローラーでファイルを選択状態で開く
-                subprocess.run(['explorer', '/select,', str(self.project.output.output_path)])
+                # /select,とパスは一つの引数として渡す必要がある
+                file_path_win = str(output_path.resolve()).replace('/', '\\')
+                subprocess.run(['explorer', f'/select,{file_path_win}'])
             elif platform.system() == "Darwin":  # macOS
-                subprocess.run(['open', '-R', str(self.project.output.output_path)])
+                subprocess.run(['open', '-R', str(output_path)])
             else:  # Linux
                 subprocess.run(['xdg-open', str(output_dir)])
         except Exception as e:
@@ -659,3 +950,84 @@ class ProjectWindow(QMainWindow):
     def log(self, message: str):
         """ログ表示"""
         self.log_text.append(message)
+
+    def new_project(self):
+        """新規プロジェクト"""
+        reply = QMessageBox.question(
+            self,
+            "新規プロジェクト",
+            "現在のプロジェクトを破棄して新規作成しますか？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            self.project = Project()
+            self.current_scene = None
+            self.load_scene_list()
+            self.update_window_title()
+            self.log("新規プロジェクトを作成しました")
+
+    def open_project(self):
+        """プロジェクトを開く"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "プロジェクトを開く",
+            "",
+            "InsightMovieプロジェクト (*.improj);;JSONファイル (*.json);;すべてのファイル (*)"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            self.project = Project(file_path)
+            self.current_scene = None
+            self.load_scene_list()
+            self.update_window_title()
+            self.log(f"プロジェクトを開きました: {Path(file_path).name}")
+        except Exception as e:
+            QMessageBox.warning(self, "エラー", f"プロジェクトを開けませんでした:\n{e}")
+
+    def save_project(self):
+        """プロジェクトを保存（上書き）"""
+        if self.project.project_path:
+            try:
+                self.project.save()
+                self.update_window_title()
+                self.log(f"プロジェクトを保存しました: {Path(self.project.project_path).name}")
+            except Exception as e:
+                QMessageBox.warning(self, "エラー", f"保存に失敗しました:\n{e}")
+        else:
+            self.save_project_as()
+
+    def save_project_as(self):
+        """名前を付けてプロジェクトを保存"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "プロジェクトを保存",
+            "",
+            "InsightMovieプロジェクト (*.improj);;JSONファイル (*.json)"
+        )
+
+        if not file_path:
+            return
+
+        # 拡張子がなければ追加
+        if not file_path.endswith(('.improj', '.json')):
+            file_path += '.improj'
+
+        try:
+            self.project.save(file_path)
+            self.update_window_title()
+            self.log(f"プロジェクトを保存しました: {Path(file_path).name}")
+        except Exception as e:
+            QMessageBox.warning(self, "エラー", f"保存に失敗しました:\n{e}")
+
+    def update_window_title(self):
+        """ウィンドウタイトルを更新"""
+        if self.project.project_path:
+            filename = Path(self.project.project_path).name
+            self.setWindowTitle(f"InsightMovie - {filename}")
+        else:
+            self.setWindowTitle("InsightMovie - 新規プロジェクト")

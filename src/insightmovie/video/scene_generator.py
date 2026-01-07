@@ -44,6 +44,45 @@ class SceneGenerator:
         # 見つからない場合は最初のフォントを返す（エラーは実行時に）
         return common_fonts[0]
 
+    @staticmethod
+    def _split_subtitle_text(text: str, max_chars: int = 18) -> str:
+        """
+        字幕テキストを適切な位置で分割
+
+        Args:
+            text: 字幕テキスト
+            max_chars: 1行あたりの最大文字数
+
+        Returns:
+            分割された文字列（改行は\\nで表現）
+        """
+        if len(text) <= max_chars:
+            return text
+
+        # 分割位置を探す（中央付近で句読点やスペースを優先）
+        mid = len(text) // 2
+        split_pos = mid
+
+        # 中央から前後5文字以内で句読点を探す
+        for offset in range(6):
+            # 中央より後ろを先に探す
+            pos = mid + offset
+            if pos < len(text) and text[pos] in ' 、。，．！？':
+                split_pos = pos + 1
+                break
+            # 中央より前を探す
+            pos = mid - offset
+            if pos > 0 and text[pos] in ' 、。，．！？':
+                split_pos = pos + 1
+                break
+
+        line1 = text[:split_pos].strip()
+        line2 = text[split_pos:].strip()
+
+        if line2:
+            return f"{line1}\\n{line2}"
+        return line1
+
     def generate_scene(
         self,
         scene: Scene,
@@ -298,15 +337,17 @@ class SceneGenerator:
         video_path: str,
         subtitle_text: str,
         width: int,
-        height: int
+        height: int,
+        max_chars_per_line: int = 18
     ) -> Optional[str]:
         """
-        字幕を焼き込み
+        字幕を焼き込み（2行対応）
 
         Args:
             video_path: 元動画ファイルパス
             subtitle_text: 字幕テキスト
             width, height: 解像度
+            max_chars_per_line: 1行あたりの最大文字数
 
         Returns:
             字幕付き一時動画ファイルパス、失敗時はNone
@@ -315,21 +356,31 @@ class SceneGenerator:
         temp_path = temp_file.name
         temp_file.close()
 
-        # 字幕エリアの高さ（画面の10%）
+        # 字幕エリアの設定
+        # 下部マージン（メディアプレイヤーの操作バーを避ける）
+        bottom_margin = int(height * 0.12)
+        # 字幕エリアの高さ（2行対応）
         subtitle_height = int(height * 0.10)
-        subtitle_y = height - subtitle_height
+        subtitle_y = height - subtitle_height - bottom_margin
 
         # フォントサイズ（高さに応じて調整）
-        font_size = int(height * 0.035)
+        font_size = int(height * 0.022)
+
+        # 長い字幕を2行に分割
+        display_text = self._split_subtitle_text(subtitle_text, max_chars_per_line)
 
         # エスケープ処理
-        escaped_text = subtitle_text.replace(':', r'\:').replace("'", r"\'")
+        escaped_text = display_text.replace(':', r'\:').replace("'", r"\'")
 
-        # drawboxで黒背景、drawtextで白文字
+        # フォントパスのエスケープ（Windowsパス対応）
+        # ffmpegフィルターではコロンとバックスラッシュをエスケープする必要がある
+        escaped_font_path = str(self.font_path).replace('\\', '/').replace(':', r'\:')
+
+        # drawboxで黒背景、drawtextで白文字（中央揃え）
         filter_complex = (
             f"drawbox=x=0:y={subtitle_y}:w={width}:h={subtitle_height}:color=black@0.7:t=fill,"
-            f"drawtext=fontfile='{self.font_path}':text='{escaped_text}':"
-            f"fontcolor=white:fontsize={font_size}:x=(w-text_w)/2:y={subtitle_y}+(h-{subtitle_y}-text_h)/2"
+            f"drawtext=fontfile='{escaped_font_path}':text='{escaped_text}':"
+            f"fontcolor=white:fontsize={font_size}:x=(w-text_w)/2:y={subtitle_y}+({subtitle_height}-text_h)/2"
         )
 
         args = [
@@ -353,15 +404,17 @@ class SceneGenerator:
         self,
         video_path: str,
         audio_path: str,
-        output_path: str
+        output_path: str,
+        silence_padding: float = 1.0
     ) -> bool:
         """
-        動画に音声を合成
+        動画に音声を合成（前後に無音を追加）
 
         Args:
             video_path: 動画ファイルパス
             audio_path: 音声ファイルパス
             output_path: 出力先mp4ファイルパス
+            silence_padding: 前後に追加する無音秒数（デフォルト1秒）
 
         Returns:
             成功したらTrue
@@ -378,14 +431,27 @@ class SceneGenerator:
             return False
 
         print(f"音声合成: {Path(video_path).name} + {Path(audio_path).name} -> {Path(output_path).name}")
+        print(f"  前後無音: {silence_padding}秒ずつ")
+
+        # filter_complexで無音を生成し、音声の前後に結合
+        # anullsrc: 無音を生成
+        # concat: 音声を結合
+        filter_complex = (
+            f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo[main];"
+            f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence1];"
+            f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence2];"
+            f"[silence1][main][silence2]concat=n=3:v=0:a=1[aout]"
+        )
 
         args = [
             "-i", video_path,
             "-i", audio_path,
+            "-filter_complex", filter_complex,
+            "-map", "0:v",
+            "-map", "[aout]",
             "-c:v", "copy",
             "-c:a", "aac",
             "-b:a", "192k",
-            "-strict", "experimental",
             "-shortest",
             "-y",
             output_path

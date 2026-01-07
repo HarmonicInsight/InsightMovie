@@ -79,8 +79,8 @@ class Project:
             self.initialize_default_scenes()
 
     def initialize_default_scenes(self):
-        """デフォルト4シーンを初期化"""
-        self.scenes = [Scene() for _ in range(4)]
+        """デフォルト2シーンを初期化"""
+        self.scenes = [Scene() for _ in range(2)]
 
     def add_scene(self, index: Optional[int] = None) -> Scene:
         """
