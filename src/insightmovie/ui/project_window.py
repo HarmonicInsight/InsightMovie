@@ -393,6 +393,7 @@ class ProjectWindow(QMainWindow):
         # 画像表示用ラベル（背面）
         self.thumbnail_label = QLabel()
         self.thumbnail_label.setAlignment(Qt.AlignCenter)
+        self.thumbnail_label.setScaledContents(False)  # 手動でスケーリングするのでFalse
         self.thumbnail_label.setStyleSheet(f"""
             background-color: transparent;
             color: {COLOR_PALETTE['text_muted']};
@@ -401,7 +402,7 @@ class ProjectWindow(QMainWindow):
         preview_layout.addWidget(self.thumbnail_label, 0, 0)
 
         # プレースホルダーラベル（素材未設定時に表示）
-        self.placeholder_label = QLabel("素材未設定\n\n画像/動画を\n選択してください")
+        self.placeholder_label = QLabel("素材未設定")
         self.placeholder_label.setAlignment(Qt.AlignCenter)
         self.placeholder_label.setStyleSheet(f"""
             background-color: transparent;
@@ -462,6 +463,7 @@ class ProjectWindow(QMainWindow):
         duration_layout.addWidget(self.duration_auto_radio)
 
         self.duration_fixed_radio = QRadioButton("固定秒数")
+        self.duration_fixed_radio.toggled.connect(self.on_duration_mode_changed)
         duration_layout.addWidget(self.duration_fixed_radio)
 
         self.fixed_seconds_spin = QDoubleSpinBox()
@@ -715,7 +717,8 @@ class ProjectWindow(QMainWindow):
                 pixmap = QPixmap(str(path))
                 if not pixmap.isNull():
                     # 枠内に収まるよう縮小（アスペクト比維持、全体表示）
-                    target_size = QSize(158, 282)  # border分を考慮
+                    # プレビューコンテナサイズ 160x284 から border(1px*2) と余白を引いたサイズ
+                    target_size = QSize(156, 280)
                     scaled = pixmap.scaled(
                         target_size,
                         Qt.KeepAspectRatio,
