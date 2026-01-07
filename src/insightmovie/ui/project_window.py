@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QListWidget, QListWidgetItem, QTextEdit,
     QLineEdit, QFileDialog, QMessageBox, QProgressBar, QGroupBox,
     QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QButtonGroup,
-    QGridLayout, QFrame
+    QGridLayout, QFrame, QScrollArea
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize
 from PySide6.QtGui import QPixmap, QIcon
@@ -349,9 +349,22 @@ class ProjectWindow(QMainWindow):
         return panel
 
     def create_scene_edit_panel(self) -> QWidget:
-        """シーン編集パネル作成"""
+        """シーン編集パネル作成（スクロール可能）"""
         panel = QGroupBox("シーン編集")
-        layout = QVBoxLayout()
+        panel_layout = QVBoxLayout()
+        panel_layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
+
+        # スクロールエリアを作成
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        # スクロール可能なコンテンツウィジェット
+        scroll_content = QWidget()
+        layout = QVBoxLayout(scroll_content)
+        layout.setSpacing(SPACING['md'])
 
         # 素材選択
         media_layout = QHBoxLayout()
@@ -374,9 +387,14 @@ class ProjectWindow(QMainWindow):
         media_layout.addStretch()
         layout.addLayout(media_layout)
 
-        # プレビューコンテナ（画像と字幕オーバーレイを重ねる）
+        # プレビューコンテナ（画像と字幕オーバーレイを重ねる）- 最大高さを設定
+        preview_wrapper = QWidget()
+        preview_wrapper_layout = QHBoxLayout(preview_wrapper)
+        preview_wrapper_layout.setContentsMargins(0, 0, 0, 0)
+        preview_wrapper_layout.addStretch()
+
         self.preview_container = QFrame()
-        self.preview_container.setFixedSize(160, 284)  # 9:16比率
+        self.preview_container.setFixedSize(160, 240)  # 高さを240pxに制限
         self.preview_container.setStyleSheet(f"""
             QFrame {{
                 background-color: #1a1a2e;
@@ -428,18 +446,25 @@ class ProjectWindow(QMainWindow):
         self.subtitle_overlay.hide()  # 初期状態は非表示（字幕がない時）
         preview_layout.addWidget(self.subtitle_overlay, 0, 0, Qt.AlignBottom)
 
-        layout.addWidget(self.preview_container)
+        preview_wrapper_layout.addWidget(self.preview_container)
+        preview_wrapper_layout.addStretch()
+        layout.addWidget(preview_wrapper)
 
-        # 説明文（ナレーション）
-        layout.addWidget(QLabel("説明文（ナレーション）:"))
+        # 説明文（ナレーション）- 横レイアウトに変更して枠を追加
+        narration_layout = QHBoxLayout()
+        narration_layout.addWidget(QLabel("説明文:"))
+
         self.narration_edit = QTextEdit()
         self.narration_edit.setPlaceholderText(
             "ここに説明文を入力してください。\n"
             "VOICEVOXで音声が生成され、その長さがシーンの長さになります。"
         )
         self.narration_edit.setMaximumHeight(100)
+        self.narration_edit.setMinimumHeight(80)
         self.narration_edit.textChanged.connect(self.on_narration_changed)
-        layout.addWidget(self.narration_edit)
+        narration_layout.addWidget(self.narration_edit)
+
+        layout.addLayout(narration_layout)
 
         # 字幕
         subtitle_layout = QHBoxLayout()
@@ -479,7 +504,11 @@ class ProjectWindow(QMainWindow):
 
         layout.addStretch()
 
-        panel.setLayout(layout)
+        # スクロールエリアにコンテンツを設定
+        scroll_area.setWidget(scroll_content)
+        panel_layout.addWidget(scroll_area)
+
+        panel.setLayout(panel_layout)
         return panel
 
     def create_export_panel(self) -> QWidget:
@@ -717,8 +746,8 @@ class ProjectWindow(QMainWindow):
                 pixmap = QPixmap(str(path))
                 if not pixmap.isNull():
                     # 枠内に収まるよう縮小（アスペクト比維持、全体表示）
-                    # プレビューコンテナサイズ 160x284 から border(1px*2) と余白を引いたサイズ
-                    target_size = QSize(156, 280)
+                    # プレビューコンテナサイズ 160x240 から border(1px*2) と余白を引いたサイズ
+                    target_size = QSize(156, 236)
                     scaled = pixmap.scaled(
                         target_size,
                         Qt.KeepAspectRatio,
