@@ -67,6 +67,9 @@ config.json
 installer/voicevox/
 build/voicevox/
 
+# ffmpeg downloaded files (should not be committed)
+tools/ffmpeg/
+
 # Temporary files
 *.tmp
 *.bak

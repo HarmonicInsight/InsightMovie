@@ -40,6 +40,26 @@ class FFmpegWrapper:
         if ffmpeg_path:
             return ffmpeg_path
 
+        # アプリケーションディレクトリからの相対パス
+        # PyInstallerでパッケージ化された場合も対応
+        import sys
+        if getattr(sys, 'frozen', False):
+            # PyInstallerでパッケージ化されている場合
+            app_dir = Path(sys.executable).parent
+        else:
+            # 開発環境
+            app_dir = Path(__file__).parent.parent.parent.parent
+
+        relative_paths = [
+            app_dir / "tools" / "ffmpeg" / "bin" / "ffmpeg.exe",
+            app_dir / "ffmpeg" / "bin" / "ffmpeg.exe",
+            app_dir / "bin" / "ffmpeg.exe",
+        ]
+
+        for path in relative_paths:
+            if path.exists():
+                return str(path)
+
         # Windowsの一般的な場所を検索
         common_paths = [
             r"C:\ffmpeg\bin\ffmpeg.exe",
