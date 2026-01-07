@@ -332,15 +332,36 @@ class SceneGenerator:
         Returns:
             成功したらTrue
         """
+        from pathlib import Path
+
+        # ファイル存在確認
+        if not Path(video_path).exists():
+            print(f"エラー: 動画ファイルが見つかりません: {video_path}")
+            return False
+
+        if not Path(audio_path).exists():
+            print(f"エラー: 音声ファイルが見つかりません: {audio_path}")
+            return False
+
+        print(f"音声合成: {Path(video_path).name} + {Path(audio_path).name} -> {Path(output_path).name}")
+
         args = [
             "-i", video_path,
             "-i", audio_path,
             "-c:v", "copy",
             "-c:a", "aac",
+            "-b:a", "192k",
             "-strict", "experimental",
             "-shortest",
             "-y",
             output_path
         ]
 
-        return self.ffmpeg.run_command(args)
+        success = self.ffmpeg.run_command(args, show_output=True)
+
+        if success:
+            print(f"✓ 音声合成完了: {Path(output_path).name}")
+        else:
+            print(f"✗ 音声合成失敗")
+
+        return success

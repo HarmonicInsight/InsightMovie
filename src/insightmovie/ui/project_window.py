@@ -2,6 +2,9 @@
 Project Window - 4 Scene Video Editor
 4シーン動画編集ウィンドウ
 """
+import os
+import subprocess
+import platform
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QListWidget, QListWidgetItem, QTextEdit,
@@ -171,7 +174,8 @@ class ProjectWindow(QMainWindow):
         self.generation_thread: Optional[VideoGenerationThread] = None
 
         self.setWindowTitle("InsightMovie - 動画自動生成")
-        self.setMinimumSize(1200, 700)
+        self.setMinimumSize(800, 600)
+        self.resize(1200, 800)  # 初期サイズ（リサイズ可能）
 
         self.setup_ui()
         self.load_scene_list()
@@ -406,8 +410,16 @@ class ProjectWindow(QMainWindow):
 
         # 長さモード
         mode_index = 0 if self.current_scene.duration_mode == DurationMode.AUTO else 1
+        self.duration_combo.blockSignals(True)
         self.duration_combo.setCurrentIndex(mode_index)
+        self.duration_combo.blockSignals(False)
+
+        self.fixed_seconds_spin.blockSignals(True)
         self.fixed_seconds_spin.setValue(self.current_scene.fixed_seconds)
+        self.fixed_seconds_spin.blockSignals(False)
+
+        # スピンボックスの有効/無効を設定
+        self.fixed_seconds_spin.setEnabled(self.current_scene.duration_mode == DurationMode.FIXED)
 
     def select_media(self):
         """素材選択"""
@@ -559,8 +571,28 @@ class ProjectWindow(QMainWindow):
 
         if success:
             QMessageBox.information(self, "完了", message)
+            # 出力フォルダを開く
+            self.open_output_folder()
         else:
             QMessageBox.warning(self, "エラー", message)
+
+    def open_output_folder(self):
+        """出力フォルダをエクスプローラーで開く"""
+        if not self.project.output.output_path:
+            return
+
+        output_dir = Path(self.project.output.output_path).parent
+
+        try:
+            if platform.system() == "Windows":
+                # Windowsの場合、エクスプローラーでファイルを選択状態で開く
+                subprocess.run(['explorer', '/select,', str(self.project.output.output_path)])
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(['open', '-R', str(self.project.output.output_path)])
+            else:  # Linux
+                subprocess.run(['xdg-open', str(output_dir)])
+        except Exception as e:
+            self.log(f"フォルダを開けませんでした: {e}")
 
     def log(self, message: str):
         """ログ表示"""
