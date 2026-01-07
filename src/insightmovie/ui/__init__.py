@@ -2,6 +2,7 @@
 UI Module
 """
 from .project_window import ProjectWindow
+from .theme import get_stylesheet, COLOR_PALETTE, SPACING, RADIUS
 
 # 旧UIもインポート可能にしておく
 try:
@@ -9,4 +10,11 @@ try:
 except ImportError:
     MainWindowOld = None
 
-__all__ = ['ProjectWindow', 'MainWindowOld']
+__all__ = [
+    'ProjectWindow',
+    'MainWindowOld',
+    'get_stylesheet',
+    'COLOR_PALETTE',
+    'SPACING',
+    'RADIUS'
+]

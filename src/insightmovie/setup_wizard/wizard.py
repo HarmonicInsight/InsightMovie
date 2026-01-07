@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..voicevox import VoiceVoxClient, EngineLauncher
+from ..ui.theme import get_stylesheet, COLOR_PALETTE, SPACING
 
 
 class EngineCheckThread(QThread):
@@ -305,7 +306,10 @@ class SetupWizard(QWizard):
         super().__init__(parent)
         self.setWindowTitle("InsightMovie - 初回セットアップ")
         self.setWizardStyle(QWizard.ModernStyle)
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(700, 500)
+
+        # Insightシリーズ統一テーマを適用
+        self.setStyleSheet(get_stylesheet())
 
         # コンポーネント初期化
         self.client = VoiceVoxClient()

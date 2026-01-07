@@ -19,6 +19,7 @@ from typing import Optional
 from ..project import Project, Scene, MediaType, DurationMode
 from ..voicevox import VoiceVoxClient, AudioCache
 from ..video import FFmpegWrapper, SceneGenerator, VideoComposer
+from .theme import get_stylesheet, COLOR_PALETTE, SPACING
 
 
 class VideoGenerationThread(QThread):
@@ -174,8 +175,11 @@ class ProjectWindow(QMainWindow):
         self.generation_thread: Optional[VideoGenerationThread] = None
 
         self.setWindowTitle("InsightMovie - 動画自動生成")
-        self.setMinimumSize(800, 600)
-        self.resize(1200, 800)  # 初期サイズ（リサイズ可能）
+        self.setMinimumSize(1100, 700)
+        self.resize(1300, 900)  # 初期サイズ（リサイズ可能）
+
+        # Insightシリーズ統一テーマを適用
+        self.setStyleSheet(get_stylesheet())
 
         self.setup_ui()
         self.load_scene_list()
@@ -186,18 +190,47 @@ class ProjectWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(SPACING['xl'], SPACING['xl'], SPACING['xl'], SPACING['xl'])
+        layout.setSpacing(SPACING['lg'])
 
-        # ステータスバー
-        status_layout = QHBoxLayout()
+        # ヘッダー
+        header_layout = QHBoxLayout()
 
+        # アプリタイトル
+        title_label = QLabel("InsightMovie")
+        title_label.setStyleSheet(f"""
+            font-size: 18pt;
+            font-weight: 600;
+            color: {COLOR_PALETTE['text_primary']};
+            padding: 0;
+        """)
+        header_layout.addWidget(title_label)
+
+        version_label = QLabel("v1.0.0")
+        version_label.setStyleSheet(f"""
+            font-size: 10pt;
+            color: {COLOR_PALETTE['text_muted']};
+            padding: 0 0 0 {SPACING['sm']}px;
+        """)
+        header_layout.addWidget(version_label)
+
+        header_layout.addStretch()
+
+        # ステータス
         voicevox_status = "✓ 接続OK" if self.voicevox.check_connection() else "✗ 未接続"
         ffmpeg_status = "✓ 検出OK" if self.ffmpeg and self.ffmpeg.check_available() else "✗ 未検出"
 
-        self.status_label = QLabel(f"VOICEVOX: {voicevox_status} | ffmpeg: {ffmpeg_status}")
-        status_layout.addWidget(self.status_label)
-        status_layout.addStretch()
+        self.status_label = QLabel(f"VOICEVOX: {voicevox_status}  •  ffmpeg: {ffmpeg_status}")
+        self.status_label.setStyleSheet(f"""
+            font-size: 10pt;
+            color: {COLOR_PALETTE['text_muted']};
+            padding: {SPACING['sm']}px {SPACING['md']}px;
+            background-color: {COLOR_PALETTE['bg_secondary']};
+            border-radius: 6px;
+        """)
+        header_layout.addWidget(self.status_label)
 
-        layout.addLayout(status_layout)
+        layout.addLayout(header_layout)
 
         # メインスプリッター
         splitter = QSplitter(Qt.Horizontal)
@@ -245,20 +278,25 @@ class ProjectWindow(QMainWindow):
 
         # ボタン
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(SPACING['sm'])
 
         add_btn = QPushButton("＋ 追加")
+        add_btn.setProperty("class", "small")
         add_btn.clicked.connect(self.add_scene)
         button_layout.addWidget(add_btn)
 
         remove_btn = QPushButton("－ 削除")
+        remove_btn.setProperty("class", "small")
         remove_btn.clicked.connect(self.remove_scene)
         button_layout.addWidget(remove_btn)
 
         up_btn = QPushButton("↑")
+        up_btn.setProperty("class", "small")
         up_btn.clicked.connect(lambda: self.move_scene(-1))
         button_layout.addWidget(up_btn)
 
         down_btn = QPushButton("↓")
+        down_btn.setProperty("class", "small")
         down_btn.clicked.connect(lambda: self.move_scene(1))
         button_layout.addWidget(down_btn)
 
@@ -281,10 +319,12 @@ class ProjectWindow(QMainWindow):
         media_layout.addWidget(self.media_label)
 
         select_media_btn = QPushButton("画像/動画を選択")
+        select_media_btn.setProperty("class", "secondary")
         select_media_btn.clicked.connect(self.select_media)
         media_layout.addWidget(select_media_btn)
 
         clear_media_btn = QPushButton("クリア")
+        clear_media_btn.setProperty("class", "small")
         clear_media_btn.clicked.connect(self.clear_media)
         media_layout.addWidget(clear_media_btn)
 
@@ -357,8 +397,16 @@ class ProjectWindow(QMainWindow):
         layout.addStretch()
 
         # 書き出しボタン
-        export_btn = QPushButton("動画を書き出し")
-        export_btn.setMinimumWidth(150)
+        export_btn = QPushButton("📹 動画を書き出し")
+        export_btn.setProperty("class", "success")
+        export_btn.setMinimumWidth(180)
+        export_btn.setMinimumHeight(44)
+        export_btn.setStyleSheet(f"""
+            QPushButton {{
+                font-size: 12pt;
+                font-weight: 600;
+            }}
+        """)
         export_btn.clicked.connect(self.export_video)
         layout.addWidget(export_btn)
 
