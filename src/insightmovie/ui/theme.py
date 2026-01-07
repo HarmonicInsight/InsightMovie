@@ -345,14 +345,6 @@ def get_stylesheet() -> str:
         background-color: {COLOR_PALETTE['brand_primary']};
     }}
 
-    QRadioButton::indicator:checked::before {{
-        content: "";
-        width: 6px;
-        height: 6px;
-        border-radius: 4px;
-        background-color: white;
-    }}
-
     QRadioButton::indicator:disabled {{
         border: 2px solid {COLOR_PALETTE['border_light']};
         background-color: {COLOR_PALETTE['bg_secondary']};
