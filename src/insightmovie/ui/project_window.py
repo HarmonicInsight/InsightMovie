@@ -465,16 +465,18 @@ class ProjectWindow(QMainWindow):
         )
         self.narration_edit.setMaximumHeight(100)
         self.narration_edit.setMinimumHeight(80)
-        # グレーの枠を明確にするため、ボーダーを濃くする
+        # 明確な枠線で入力範囲を視覚化
         self.narration_edit.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {COLOR_PALETTE['bg_input']};
-                border: 2px solid {COLOR_PALETTE['border_dark']};
+                background-color: {COLOR_PALETTE['bg_secondary']};
+                border: 2px solid {COLOR_PALETTE['text_secondary']};
                 border-radius: {RADIUS['default']}px;
                 padding: {SPACING['sm']}px;
+                color: {COLOR_PALETTE['text_primary']};
             }}
             QTextEdit:focus {{
                 border: 2px solid {COLOR_PALETTE['brand_primary']};
+                background-color: {COLOR_PALETTE['bg_input']};
             }}
         """)
         self.narration_edit.textChanged.connect(self.on_narration_changed)
