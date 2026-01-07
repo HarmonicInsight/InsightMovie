@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QListWidget, QListWidgetItem, QTextEdit,
     QLineEdit, QFileDialog, QMessageBox, QProgressBar, QGroupBox,
     QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QButtonGroup,
-    QGridLayout, QFrame, QScrollArea
+    QGridLayout, QFrame, QScrollArea, QDialog
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap, QIcon, QAction
 from pathlib import Path
 from typing import Optional
 
@@ -203,8 +203,92 @@ class ProjectWindow(QMainWindow):
         # Insightシリーズ統一テーマを適用
         self.setStyleSheet(get_stylesheet())
 
+        self.setup_menu_bar()
         self.setup_ui()
         self.load_scene_list()
+
+    def setup_menu_bar(self):
+        """メニューバーの設定"""
+        menu_bar = self.menuBar()
+
+        # ファイルメニュー
+        file_menu = menu_bar.addMenu("ファイル(&F)")
+
+        new_action = QAction("新規プロジェクト(&N)", self)
+        new_action.setShortcut("Ctrl+N")
+        new_action.triggered.connect(self.new_project)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("プロジェクトを開く(&O)...", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.triggered.connect(self.open_project)
+        file_menu.addAction(open_action)
+
+        file_menu.addSeparator()
+
+        save_action = QAction("保存(&S)", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_project)
+        file_menu.addAction(save_action)
+
+        save_as_action = QAction("名前を付けて保存(&A)...", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
+        save_as_action.triggered.connect(self.save_project_as)
+        file_menu.addAction(save_as_action)
+
+        file_menu.addSeparator()
+
+        exit_action = QAction("終了(&X)", self)
+        exit_action.setShortcut("Alt+F4")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+        # 編集メニュー
+        edit_menu = menu_bar.addMenu("編集(&E)")
+
+        add_scene_action = QAction("シーンを追加(&A)", self)
+        add_scene_action.setShortcut("Ctrl+T")
+        add_scene_action.triggered.connect(self.add_scene)
+        edit_menu.addAction(add_scene_action)
+
+        remove_scene_action = QAction("シーンを削除(&D)", self)
+        remove_scene_action.setShortcut("Delete")
+        remove_scene_action.triggered.connect(self.remove_scene)
+        edit_menu.addAction(remove_scene_action)
+
+        edit_menu.addSeparator()
+
+        move_up_action = QAction("シーンを上へ移動(&U)", self)
+        move_up_action.setShortcut("Ctrl+Up")
+        move_up_action.triggered.connect(lambda: self.move_scene(-1))
+        edit_menu.addAction(move_up_action)
+
+        move_down_action = QAction("シーンを下へ移動(&D)", self)
+        move_down_action.setShortcut("Ctrl+Down")
+        move_down_action.triggered.connect(lambda: self.move_scene(1))
+        edit_menu.addAction(move_down_action)
+
+        # ヘルプメニュー
+        help_menu = menu_bar.addMenu("ヘルプ(&H)")
+
+        tutorial_action = QAction("チュートリアル(&T)", self)
+        tutorial_action.setShortcut("F1")
+        tutorial_action.triggered.connect(self.show_tutorial)
+        help_menu.addAction(tutorial_action)
+
+        faq_action = QAction("よくある質問 (FAQ)(&F)", self)
+        faq_action.triggered.connect(self.show_faq)
+        help_menu.addAction(faq_action)
+
+        help_menu.addSeparator()
+
+        license_action = QAction("ライセンス情報(&L)", self)
+        license_action.triggered.connect(self.show_license)
+        help_menu.addAction(license_action)
+
+        about_action = QAction("InsightMovieについて(&A)", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
 
     def setup_ui(self):
         """UI構築"""
@@ -1081,3 +1165,469 @@ class ProjectWindow(QMainWindow):
             self.setWindowTitle(f"InsightMovie - {filename}")
         else:
             self.setWindowTitle("InsightMovie - 新規プロジェクト")
+
+    def show_tutorial(self):
+        """チュートリアルダイアログを表示"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("InsightMovie - チュートリアル")
+        dialog.setMinimumSize(700, 600)
+
+        layout = QVBoxLayout()
+
+        # スクロール可能なテキストエリア
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setHtml("""
+        <h1 style='color: #3B82F6;'>InsightMovie チュートリアル</h1>
+
+        <h2>1. 基本的な使い方</h2>
+        <p><b>InsightMovie</b>は、テキストと画像から自動的にナレーション付き動画を生成するプロフェッショナルツールです。</p>
+
+        <h3>📝 ステップ1: プロジェクトの作成</h3>
+        <ul>
+            <li><b>新規プロジェクト</b>: メニューバーから「ファイル」→「新規プロジェクト」を選択</li>
+            <li><b>既存のプロジェクトを開く</b>: 「ファイル」→「プロジェクトを開く」から .improj ファイルを選択</li>
+        </ul>
+
+        <h3>🎬 ステップ2: シーンの編集</h3>
+        <ol>
+            <li><b>シーンを選択</b>: 左側の「シーン一覧」から編集したいシーンをクリック</li>
+            <li><b>素材を設定</b>: 「画像/動画を選択」ボタンで素材ファイルを選択
+                <ul>
+                    <li>対応形式: PNG, JPG, JPEG, WEBP, MP4, MOV, AVI</li>
+                    <li>プレビューエリアで確認できます</li>
+                </ul>
+            </li>
+            <li><b>説明文を入力</b>: ナレーション用のテキストを入力
+                <ul>
+                    <li>VOICEVOXが自動的に音声を生成します</li>
+                    <li>音声の長さに応じてシーンの長さが自動調整されます</li>
+                </ul>
+            </li>
+            <li><b>字幕を入力</b>: 動画下部に表示される字幕テキスト（任意）
+                <ul>
+                    <li>18文字以内を推奨（読みやすさのため）</li>
+                    <li>プレビューエリアで表示を確認できます</li>
+                </ul>
+            </li>
+            <li><b>シーンの長さを設定</b>:
+                <ul>
+                    <li><b>自動（音声に合わせる）</b>: ナレーションの長さ + 2秒の無音を自動設定</li>
+                    <li><b>固定秒数</b>: 0.1〜60秒の範囲で手動設定</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>➕ ステップ3: シーンの管理</h3>
+        <ul>
+            <li><b>シーンを追加</b>: 「＋ 追加」ボタンまたは Ctrl+T</li>
+            <li><b>シーンを削除</b>: 「－ 削除」ボタンまたは Delete キー</li>
+            <li><b>順序を変更</b>: 「↑」「↓」ボタンまたは Ctrl+Up/Down</li>
+        </ul>
+
+        <h3>🎙️ ステップ4: 書き出し設定</h3>
+        <ol>
+            <li><b>話者を選択</b>: VOICEVOXの音声キャラクターを選択</li>
+            <li><b>解像度を選択</b>:
+                <ul>
+                    <li><b>1080x1920（縦動画）</b>: YouTube Shorts、TikTok、Instagram向け</li>
+                    <li><b>1920x1080（横動画）</b>: YouTube、ニコニコ動画向け</li>
+                </ul>
+            </li>
+            <li><b>FPSを設定</b>: 15〜60fpsの範囲で設定（デフォルト: 30fps）</li>
+        </ol>
+
+        <h3>📹 ステップ5: 動画を書き出し</h3>
+        <ol>
+            <li>「動画を書き出し」ボタンをクリック</li>
+            <li>保存先とファイル名を指定</li>
+            <li>生成プロセスがログエリアに表示されます</li>
+            <li>完了すると、自動的にエクスプローラーでファイルを表示します</li>
+        </ol>
+
+        <h2>2. プロジェクトの保存</h2>
+        <ul>
+            <li><b>保存（Ctrl+S）</b>: 現在のプロジェクトを上書き保存</li>
+            <li><b>名前を付けて保存（Ctrl+Shift+S）</b>: 新しいファイル名で保存</li>
+            <li>プロジェクトファイル（.improj）には、シーン情報、素材パス、設定が保存されます</li>
+        </ul>
+
+        <h2>3. ショートカットキー</h2>
+        <table border='1' cellpadding='5' style='border-collapse: collapse;'>
+            <tr><th>機能</th><th>ショートカット</th></tr>
+            <tr><td>新規プロジェクト</td><td>Ctrl+N</td></tr>
+            <tr><td>プロジェクトを開く</td><td>Ctrl+O</td></tr>
+            <tr><td>保存</td><td>Ctrl+S</td></tr>
+            <tr><td>名前を付けて保存</td><td>Ctrl+Shift+S</td></tr>
+            <tr><td>シーンを追加</td><td>Ctrl+T</td></tr>
+            <tr><td>シーンを削除</td><td>Delete</td></tr>
+            <tr><td>シーンを上へ移動</td><td>Ctrl+Up</td></tr>
+            <tr><td>シーンを下へ移動</td><td>Ctrl+Down</td></tr>
+            <tr><td>チュートリアル</td><td>F1</td></tr>
+        </table>
+
+        <h2>4. ベストプラクティス</h2>
+        <ul>
+            <li>📊 <b>画像の推奨サイズ</b>: 1920x1080以上の解像度を推奨</li>
+            <li>🎤 <b>ナレーション</b>: 1シーンあたり100文字程度が視聴者にとって聞きやすい</li>
+            <li>📝 <b>字幕</b>: 18文字以内で改行すると読みやすい</li>
+            <li>💾 <b>こまめな保存</b>: 作業中は定期的にCtrl+Sで保存</li>
+            <li>🔊 <b>VOICEVOX接続</b>: 事前にVOICEVOXを起動しておく</li>
+        </ul>
+
+        <p style='margin-top: 20px; padding: 10px; background-color: #DBEAFE; border-left: 4px solid #3B82F6;'>
+        <b>💡 ヒント:</b> プロジェクトファイルは定期的にバックアップすることをお勧めします。
+        </p>
+        """)
+        layout.addWidget(text_edit)
+
+        # 閉じるボタン
+        close_btn = QPushButton("閉じる")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_faq(self):
+        """FAQダイアログを表示"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("InsightMovie - よくある質問 (FAQ)")
+        dialog.setMinimumSize(700, 600)
+
+        layout = QVBoxLayout()
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setHtml("""
+        <h1 style='color: #3B82F6;'>よくある質問 (FAQ)</h1>
+
+        <h2>🎬 動画生成について</h2>
+
+        <h3>Q1. 動画生成に失敗します</h3>
+        <p><b>A:</b> 以下の項目を確認してください：</p>
+        <ul>
+            <li><b>VOICEVOXの起動</b>: VOICEVOXが起動しており、ステータスが「接続OK」になっているか確認</li>
+            <li><b>ffmpegの検出</b>: ステータスバーで「ffmpeg: 検出OK」が表示されているか確認</li>
+            <li><b>素材ファイル</b>: 画像/動画ファイルが存在し、アクセス可能か確認</li>
+            <li><b>ディスク容量</b>: 十分な空き容量があるか確認</li>
+        </ul>
+
+        <h3>Q2. 音声が生成されません</h3>
+        <p><b>A:</b> VOICEVOXとの接続を確認してください：</p>
+        <ol>
+            <li>VOICEVOXアプリケーションを起動</li>
+            <li>InsightMovieを再起動</li>
+            <li>ステータスバーで「VOICEVOX: 接続OK」と表示されることを確認</li>
+            <li>それでも接続できない場合は、VOICEVOXのポート設定（デフォルト: 50021）を確認</li>
+        </ol>
+
+        <h3>Q3. 動画の書き出しに時間がかかります</h3>
+        <p><b>A:</b> これは正常な動作です。処理時間は以下の要因で変わります：</p>
+        <ul>
+            <li>シーン数（シーンが多いほど時間がかかります）</li>
+            <li>解像度（高解像度ほど処理時間が長くなります）</li>
+            <li>FPS設定（高いFPSほど処理時間が長くなります）</li>
+            <li>PCのスペック（CPU/GPU性能により変動）</li>
+        </ul>
+        <p><b>目安:</b> 4シーン、1080x1920解像度、30fpsで約2〜5分程度です。</p>
+
+        <h2>🎙️ 音声・字幕について</h2>
+
+        <h3>Q4. 字幕が長すぎて画面に収まりません</h3>
+        <p><b>A:</b> 字幕は18文字以内を推奨します。</p>
+        <ul>
+            <li>18文字を超えると自動的に2行に分割されます</li>
+            <li>36文字を超えると赤い背景で警告が表示されます</li>
+            <li>字幕プレビューで確認しながら調整してください</li>
+        </ul>
+
+        <h3>Q5. ナレーションの声を変更したいです</h3>
+        <p><b>A:</b> 書き出し設定の「話者」ドロップダウンから選択できます。</p>
+        <ul>
+            <li>VOICEVOXにインストールされている全ての話者が選択可能</li>
+            <li>話者名の後ろに「(ノーマル)」「(喜び)」などの感情タグが表示されます</li>
+            <li>動画書き出し時に選択した話者で音声が生成されます</li>
+        </ul>
+
+        <h3>Q6. シーンごとに話者を変えられますか？</h3>
+        <p><b>A:</b> 現在のバージョンでは、プロジェクト全体で1人の話者のみ選択可能です。</p>
+        <p>将来のアップデートでシーンごとの話者選択機能を追加予定です。</p>
+
+        <h2>💾 プロジェクト管理について</h2>
+
+        <h3>Q7. プロジェクトファイル（.improj）には何が保存されますか？</h3>
+        <p><b>A:</b> 以下の情報が保存されます：</p>
+        <ul>
+            <li>全シーンの説明文（ナレーション）と字幕</li>
+            <li>素材ファイルのパス（絶対パス）</li>
+            <li>シーンの長さ設定</li>
+            <li>プロジェクト設定（フォントパスなど）</li>
+        </ul>
+        <p><b>注意:</b> 素材ファイル本体は含まれません。プロジェクトを他のPCで開く場合は、素材ファイルも一緒にコピーしてください。</p>
+
+        <h3>Q8. 画像ファイルを移動したら読み込めなくなりました</h3>
+        <p><b>A:</b> 素材ファイルのパスが変更された可能性があります：</p>
+        <ol>
+            <li>該当するシーンを選択</li>
+            <li>「クリア」ボタンで古いパスをクリア</li>
+            <li>「画像/動画を選択」で新しい場所から再度選択</li>
+            <li>プロジェクトを保存（Ctrl+S）</li>
+        </ol>
+
+        <h2>⚙️ 技術的な問題</h2>
+
+        <h3>Q9. ffmpegが検出されません</h3>
+        <p><b>A:</b> ffmpegのインストールと設定を確認してください：</p>
+        <ul>
+            <li><b>Windows:</b> インストーラーが自動的にダウンロード・設定します</li>
+            <li><b>手動インストール:</b> ffmpeg.orgから入手し、PATHに追加</li>
+            <li>コマンドプロンプトで「ffmpeg -version」を実行して動作確認</li>
+        </ul>
+
+        <h3>Q10. エラーメッセージが表示されます</h3>
+        <p><b>A:</b> ログエリアの内容を確認してください：</p>
+        <ul>
+            <li>ログには詳細なエラー情報が記録されています</li>
+            <li>エラーメッセージをもとに、上記のFAQを参照</li>
+            <li>解決しない場合は、サポートまでお問い合わせください</li>
+        </ul>
+
+        <h2>📊 パフォーマンス</h2>
+
+        <h3>Q11. 推奨スペックを教えてください</h3>
+        <p><b>A:</b> 以下のスペックを推奨します：</p>
+        <table border='1' cellpadding='5' style='border-collapse: collapse;'>
+            <tr><th>項目</th><th>最小スペック</th><th>推奨スペック</th></tr>
+            <tr><td>OS</td><td>Windows 10</td><td>Windows 11</td></tr>
+            <tr><td>CPU</td><td>Intel Core i5以上</td><td>Intel Core i7以上</td></tr>
+            <tr><td>メモリ</td><td>8GB</td><td>16GB以上</td></tr>
+            <tr><td>ストレージ</td><td>10GB以上の空き容量</td><td>SSD推奨</td></tr>
+        </table>
+
+        <h2>📞 サポート</h2>
+
+        <h3>Q12. その他の質問やサポートが必要です</h3>
+        <p><b>A:</b> 以下の情報をご準備の上、サポートまでお問い合わせください：</p>
+        <ul>
+            <li>InsightMovieのバージョン（v1.0.0）</li>
+            <li>エラーメッセージの内容</li>
+            <li>再現手順</li>
+            <li>ログエリアの内容（可能であれば）</li>
+        </ul>
+
+        <p style='margin-top: 20px; padding: 10px; background-color: #DBEAFE; border-left: 4px solid #3B82F6;'>
+        <b>💡 ヒント:</b> まずはチュートリアル（F1キー）で基本的な使い方をご確認ください。
+        </p>
+        """)
+        layout.addWidget(text_edit)
+
+        close_btn = QPushButton("閉じる")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_license(self):
+        """ライセンス情報ダイアログを表示"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("InsightMovie - ライセンス情報")
+        dialog.setMinimumSize(700, 600)
+
+        layout = QVBoxLayout()
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setHtml("""
+        <h1 style='color: #3B82F6;'>ライセンス情報</h1>
+
+        <h2>InsightMovie ソフトウェアライセンス</h2>
+
+        <h3>1. 使用許諾</h3>
+        <p>本ソフトウェア（InsightMovie）は、正規のライセンスを購入したお客様に対して、以下の権利を付与します：</p>
+        <ul>
+            <li>個人または法人での商用・非商用利用</li>
+            <li>本ソフトウェアで生成した動画コンテンツの自由な配布・販売</li>
+            <li>1ライセンスにつき1台のPCでの使用</li>
+        </ul>
+
+        <h3>2. 使用制限</h3>
+        <p>以下の行為は禁止されています：</p>
+        <ul>
+            <li>本ソフトウェアの複製、再配布、転売</li>
+            <li>リバースエンジニアリング、逆コンパイル、逆アセンブル</li>
+            <li>ライセンスキーの共有または譲渡</li>
+            <li>違法なコンテンツの生成</li>
+        </ul>
+
+        <h3>3. 生成コンテンツの著作権</h3>
+        <p>InsightMovieで生成した動画の著作権は、以下のように取り扱われます：</p>
+        <ul>
+            <li><b>お客様が作成したテキスト・選択した素材</b>: お客様に帰属します</li>
+            <li><b>音声（VOICEVOXによる生成）</b>: VOICEVOXの利用規約に従います
+                <ul>
+                    <li>商用利用可能（話者によっては制限あり）</li>
+                    <li>詳細はVOICEVOXの公式サイトをご確認ください</li>
+                </ul>
+            </li>
+            <li><b>最終的な動画</b>: お客様が自由に使用・配布・販売できます</li>
+        </ul>
+
+        <h3>4. 第三者ソフトウェア</h3>
+        <p>InsightMovieは以下のオープンソースソフトウェアを使用しています：</p>
+
+        <h4>PySide6 (Qt for Python)</h4>
+        <ul>
+            <li><b>ライセンス:</b> LGPL v3</li>
+            <li><b>著作権:</b> The Qt Company</li>
+            <li><b>用途:</b> ユーザーインターフェース</li>
+        </ul>
+
+        <h4>FFmpeg</h4>
+        <ul>
+            <li><b>ライセンス:</b> LGPL v2.1+</li>
+            <li><b>著作権:</b> FFmpeg developers</li>
+            <li><b>用途:</b> 動画エンコード・処理</li>
+        </ul>
+
+        <h4>VOICEVOX</h4>
+        <ul>
+            <li><b>開発:</b> Hiroshiba Kazuyuki</li>
+            <li><b>ライセンス:</b> 各音声ライブラリに準拠</li>
+            <li><b>用途:</b> 音声合成</li>
+            <li><b>注意:</b> VOICEVOXは別途インストールが必要です</li>
+        </ul>
+
+        <h3>5. 免責事項</h3>
+        <p>本ソフトウェアは「現状のまま」提供され、明示または黙示を問わず、いかなる保証も行いません：</p>
+        <ul>
+            <li>本ソフトウェアの使用によって生じた損害について、開発者は一切の責任を負いません</li>
+            <li>生成されたコンテンツの品質、正確性、適合性について保証しません</li>
+            <li>第三者の権利侵害について、お客様が責任を負うものとします</li>
+        </ul>
+
+        <h3>6. アップデート・サポート</h3>
+        <ul>
+            <li>ソフトウェアのアップデートは無償で提供される場合があります</li>
+            <li>サポート期間は購入日から1年間です</li>
+            <li>サポート期間終了後も、ソフトウェアは継続してご利用いただけます</li>
+        </ul>
+
+        <h3>7. プライバシー</h3>
+        <p>InsightMovieは以下のプライバシーポリシーを遵守します：</p>
+        <ul>
+            <li>個人情報の収集は行いません</li>
+            <li>プロジェクトデータはローカルPCにのみ保存されます</li>
+            <li>インターネット接続が必要なのはVOICEVOXとの通信のみです</li>
+            <li>使用統計やテレメトリーデータの送信は行いません</li>
+        </ul>
+
+        <h3>8. 準拠法</h3>
+        <p>本ライセンス契約は日本国法に準拠し、解釈されるものとします。</p>
+
+        <hr>
+
+        <p style='margin-top: 20px; padding: 10px; background-color: #FEF3C7; border-left: 4px solid #F59E0B;'>
+        <b>⚠️ 重要:</b> 本ソフトウェアを使用する前に、上記のライセンス条項をよくお読みください。
+        本ソフトウェアのインストールまたは使用により、これらの条項に同意したものとみなされます。
+        </p>
+
+        <p style='text-align: center; margin-top: 30px; color: #6B7280;'>
+        InsightMovie v1.0.0<br>
+        Copyright © 2024-2025 Harmonic Insight. All Rights Reserved.
+        </p>
+        """)
+        layout.addWidget(text_edit)
+
+        close_btn = QPushButton("閉じる")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_about(self):
+        """バージョン情報ダイアログを表示"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("InsightMovieについて")
+        dialog.setMinimumSize(600, 500)
+
+        layout = QVBoxLayout()
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setHtml("""
+        <div style='text-align: center;'>
+            <h1 style='color: #3B82F6; margin-top: 30px;'>InsightMovie</h1>
+            <p style='font-size: 14pt; color: #6B7280;'>プロフェッショナル動画自動生成ツール</p>
+            <p style='font-size: 12pt; margin-top: 20px;'><b>バージョン 1.0.0</b></p>
+        </div>
+
+        <hr style='margin: 30px 0;'>
+
+        <h2 style='color: #3B82F6;'>製品概要</h2>
+        <p>InsightMovieは、テキストと画像から自動的にナレーション付き動画を生成する、
+        プロフェッショナル向けの動画制作ツールです。</p>
+
+        <h3>主な機能</h3>
+        <ul>
+            <li>🎬 <b>自動動画生成</b> - テキストと画像から高品質な動画を自動作成</li>
+            <li>🎙️ <b>VOICEVOX連携</b> - 自然な日本語ナレーションを自動生成</li>
+            <li>📝 <b>字幕サポート</b> - 読みやすい字幕を自動配置</li>
+            <li>🎨 <b>柔軟な編集</b> - シーン単位での細かい調整が可能</li>
+            <li>📊 <b>複数フォーマット</b> - 縦動画・横動画の両方に対応</li>
+            <li>💾 <b>プロジェクト管理</b> - 作業を保存して後から編集可能</li>
+        </ul>
+
+        <h3>対応フォーマット</h3>
+        <ul>
+            <li><b>画像:</b> PNG, JPG, JPEG, WEBP</li>
+            <li><b>動画:</b> MP4, MOV, AVI</li>
+            <li><b>出力:</b> MP4 (H.264)</li>
+            <li><b>解像度:</b> 1080x1920 (縦) / 1920x1080 (横)</li>
+        </ul>
+
+        <h3>技術スタック</h3>
+        <ul>
+            <li>Python 3.11+</li>
+            <li>PySide6 (Qt for Python)</li>
+            <li>FFmpeg</li>
+            <li>VOICEVOX Engine</li>
+        </ul>
+
+        <hr style='margin: 30px 0;'>
+
+        <h2 style='color: #3B82F6;'>開発元</h2>
+        <p><b>Harmonic Insight</b><br>
+        プロフェッショナル向けコンテンツ制作ツールの開発</p>
+
+        <h3>Insightシリーズ製品</h3>
+        <ul>
+            <li><b>InsightSlide</b> - プレゼンテーション自動生成ツール</li>
+            <li><b>InsightMovie</b> - 動画自動生成ツール (本製品)</li>
+        </ul>
+
+        <hr style='margin: 30px 0;'>
+
+        <div style='background-color: #F8FAFC; padding: 15px; border-radius: 8px; margin-top: 20px;'>
+            <p style='margin: 0; color: #64748B; font-size: 10pt;'>
+            <b>システム情報</b><br>
+            Python Version: 3.11+<br>
+            PySide6 Version: 6.6+<br>
+            Build Date: 2025-01-07
+            </p>
+        </div>
+
+        <p style='text-align: center; margin-top: 30px; color: #94A3B8; font-size: 9pt;'>
+        Copyright © 2024-2025 Harmonic Insight. All Rights Reserved.
+        </p>
+        """)
+        layout.addWidget(text_edit)
+
+        close_btn = QPushButton("閉じる")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.setLayout(layout)
+        dialog.exec()
