@@ -1,11 +1,11 @@
 @echo off
-REM ShortMaker Studio Build Script
+REM InsightMovie Build Script
 REM Windows用ビルド自動化スクリプト
 
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo ShortMaker Studio Build Script
+echo InsightMovie Build Script
 echo ========================================
 echo.
 
@@ -54,7 +54,7 @@ REM Step 3: PyInstallerでビルド
 echo [Step 3/5] Building with PyInstaller...
 echo.
 
-pyinstaller shortmaker_studio.spec
+pyinstaller insightmovie.spec
 if %errorlevel% neq 0 (
     echo ERROR: PyInstaller build failed
     goto error
@@ -67,15 +67,15 @@ REM Step 4: ビルド結果の確認
 echo [Step 4/5] Verifying build...
 echo.
 
-if not exist "dist\ShortMakerStudio\ShortMakerStudio.exe" (
-    echo ERROR: ShortMakerStudio.exe not found in dist folder
+if not exist "dist\InsightMovie\InsightMovie.exe" (
+    echo ERROR: InsightMovie.exe not found in dist folder
     goto error
 )
 
-echo - ShortMakerStudio.exe: OK
+echo - InsightMovie.exe: OK
 
 REM ファイルサイズ表示
-for %%F in ("dist\ShortMakerStudio\ShortMakerStudio.exe") do (
+for %%F in ("dist\InsightMovie\InsightMovie.exe") do (
     set size=%%~zF
     set /a size_mb=!size! / 1048576
     echo - Size: !size_mb! MB
@@ -91,7 +91,7 @@ set INNO_SETUP="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 if exist %INNO_SETUP% (
     echo Inno Setup found. Creating installer...
-    %INNO_SETUP% ..\installer\shortmaker_studio.iss
+    %INNO_SETUP% ..\installer\insightmovie.iss
 
     if %errorlevel% neq 0 (
         echo WARNING: Installer creation failed
@@ -100,7 +100,7 @@ if exist %INNO_SETUP% (
         echo Installer created successfully!
 
         REM インストーラーの場所を表示
-        for %%F in ("..\build\installer_output\ShortMakerStudio-Setup-*.exe") do (
+        for %%F in ("..\build\installer_output\InsightMovie-Setup-*.exe") do (
             echo - Installer: %%~nxF
             set /a inst_size=%%~zF / 1048576
             echo - Size: !inst_size! MB
@@ -112,7 +112,7 @@ if exist %INNO_SETUP% (
     echo.
     echo To create installer manually:
     echo 1. Install Inno Setup from https://jrsoftware.org/isdl.php
-    echo 2. Open installer\shortmaker_studio.iss
+    echo 2. Open installer\insightmovie.iss
     echo 3. Click Build ^> Compile
 )
 
@@ -121,11 +121,11 @@ echo ========================================
 echo Build Summary
 echo ========================================
 echo.
-echo Build directory: %cd%\dist\ShortMakerStudio\
-echo Main executable: ShortMakerStudio.exe
+echo Build directory: %cd%\dist\InsightMovie\
+echo Main executable: InsightMovie.exe
 echo.
 echo Next steps:
-echo 1. Test the application: dist\ShortMakerStudio\ShortMakerStudio.exe
+echo 1. Test the application: dist\InsightMovie\InsightMovie.exe
 echo 2. Create installer (if not already created)
 echo 3. Run tests according to docs\TESTING_GUIDE.md
 echo.

@@ -1,10 +1,10 @@
 # 動作確認手順書
 
-ShortMaker Studio の動作確認・テスト手順
+InsightMovie の動作確認・テスト手順
 
 ## 概要
 
-この手順書では、ShortMaker Studioのインストールから音声生成までの一連の動作確認手順を説明します。
+この手順書では、InsightMovieのインストールから音声生成までの一連の動作確認手順を説明します。
 
 ## テスト環境
 
@@ -18,7 +18,7 @@ ShortMaker Studio の動作確認・テスト手順
 ### 準備
 
 1. クリーンな Windows 環境（仮想マシン推奨）
-2. インストーラー: `ShortMakerStudio-Setup-1.0.0.exe`
+2. インストーラー: `InsightMovie-Setup-1.0.0.exe`
 3. テスト用テキスト（後述）
 
 ## テストシナリオ
@@ -29,11 +29,11 @@ ShortMaker Studio の動作確認・テスト手順
 
 **手順:**
 
-1. `ShortMakerStudio-Setup-1.0.0.exe` をダブルクリック
+1. `InsightMovie-Setup-1.0.0.exe` をダブルクリック
 2. セットアップウィザードが起動
 3. 「次へ」をクリック
 4. ライセンス契約に同意
-5. インストール先を確認（デフォルト: `C:\Program Files\ShortMaker Studio`）
+5. インストール先を確認（デフォルト: `C:\Program Files\InsightMovie`）
 6. **重要**: 「VOICEVOX自動セットアップ」にチェックが入っていることを確認
 7. 「次へ」をクリック
 8. VOICEVOX利用規約への同意ページが表示される
@@ -48,14 +48,14 @@ ShortMaker Studio の動作確認・テスト手順
 
 - インストールが正常に完了する
 - エラーメッセージが表示されない
-- `%LOCALAPPDATA%\ShortMakerStudio\voicevox\` にVOICEVOXがダウンロードされる
+- `%LOCALAPPDATA%\InsightMovie\voicevox\` にVOICEVOXがダウンロードされる
 - アプリケーションが起動する
 
 **確認コマンド:**
 
 ```cmd
-dir "%LOCALAPPDATA%\ShortMakerStudio\voicevox"
-dir "%ProgramFiles%\ShortMaker Studio"
+dir "%LOCALAPPDATA%\InsightMovie\voicevox"
+dir "%ProgramFiles%\InsightMovie"
 ```
 
 #### 1.2 初回起動・セットアップウィザード
@@ -106,7 +106,7 @@ dir "%ProgramFiles%\ShortMaker Studio"
 
 1. テキスト入力エリアに以下を入力:
    ```
-   こんにちは、ShortMaker Studioです。
+   こんにちは、InsightMovieです。
    ```
 2. 「音声を生成」ボタンをクリック
 3. ログに「音声生成開始」と表示される
@@ -190,7 +190,7 @@ dir "%ProgramFiles%\ShortMaker Studio"
 
 1. セットアップウィザードのエンジン検出ページで「手動設定」ボタンをクリック
 2. ファイル選択ダイアログが表示される
-3. VOICEVOXの `run.exe` を選択（例: `%LOCALAPPDATA%\ShortMakerStudio\voicevox\run.exe`）
+3. VOICEVOXの `run.exe` を選択（例: `%LOCALAPPDATA%\InsightMovie\voicevox\run.exe`）
 4. 「エンジンのパス: ...」と表示される
 5. 「エンジンを起動」ボタンをクリック
 6. エンジンが起動される
@@ -230,7 +230,7 @@ dir "%ProgramFiles%\ShortMaker Studio"
 **手順:**
 
 1. ダウンロードしたVOICEVOX ZIPファイルを展開
-2. 展開したフォルダを `%LOCALAPPDATA%\ShortMakerStudio\voicevox\` に配置
+2. 展開したフォルダを `%LOCALAPPDATA%\InsightMovie\voicevox\` に配置
 3. アプリケーションを起動
 4. セットアップウィザードでエンジンが検出される
 
@@ -248,7 +248,7 @@ dir "%ProgramFiles%\ShortMaker Studio"
 1. コマンドプロンプトを開く
 2. 以下を実行:
    ```cmd
-   cd %LOCALAPPDATA%\ShortMakerStudio\voicevox
+   cd %LOCALAPPDATA%\InsightMovie\voicevox
    run.exe --port=50050
    ```
 3. アプリケーションを起動
@@ -345,6 +345,6 @@ dir "%ProgramFiles%\ShortMaker Studio"
 
 ## まとめ
 
-この手順書に従って動作確認を実施することで、ShortMaker Studioの品質を保証できます。
+この手順書に従って動作確認を実施することで、InsightMovieの品質を保証できます。
 
 問題が発見された場合は、GitHub Issuesで報告してください。

@@ -1,16 +1,16 @@
 # クイックスタートガイド
 
-ShortMaker Studioを使い始めるための最短手順
+InsightMovieを使い始めるための最短手順
 
 ## 📦 インストール（5分）
 
 ### 1. インストーラーをダウンロード
 
-[Releases](https://github.com/yourusername/shortmaker-studio/releases)から最新版をダウンロード
+[Releases](https://github.com/yourusername/insightmovie/releases)から最新版をダウンロード
 
 ### 2. インストール実行
 
-1. `ShortMakerStudio-Setup-1.0.0.exe` をダブルクリック
+1. `InsightMovie-Setup-1.0.0.exe` をダブルクリック
 2. 「次へ」を数回クリック
 3. ✅ **重要**: 「VOICEVOX自動セットアップ」に**必ずチェック**
 4. インストール完了まで待つ（数分かかります）
@@ -21,7 +21,7 @@ ShortMaker Studioを使い始めるための最短手順
 
 ### 1. アプリを起動
 
-スタートメニューまたはデスクトップから「ShortMaker Studio」をクリック
+スタートメニューまたはデスクトップから「InsightMovie」をクリック
 
 ### 2. セットアップウィザード
 
@@ -38,7 +38,7 @@ ShortMaker Studioを使い始めるための最短手順
 
 1. **テキスト入力**
    ```
-   こんにちは、ShortMaker Studioです。
+   こんにちは、InsightMovieです。
    ```
 
 2. **生成ボタンをクリック**
@@ -62,7 +62,7 @@ ShortMaker Studioを使い始めるための最短手順
 1. 「手動設定」をクリック
 2. 以下のパスを探す:
    ```
-   C:\Users\[ユーザー名]\AppData\Local\ShortMakerStudio\voicevox\run.exe
+   C:\Users\[ユーザー名]\AppData\Local\InsightMovie\voicevox\run.exe
    ```
 3. run.exeを選択して「開く」
 
@@ -93,7 +93,7 @@ ShortMaker Studioを使い始めるための最短手順
 問題が解決しない場合:
 
 1. [FAQ](FAQ.md)を確認
-2. [GitHub Issues](https://github.com/yourusername/shortmaker-studio/issues)で質問
+2. [GitHub Issues](https://github.com/yourusername/insightmovie/issues)で質問
 
 ---
 

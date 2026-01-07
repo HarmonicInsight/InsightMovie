@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InsightMovie - 専門知識不要の音声付き動画制作・マニュアル作成ツール</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* 動画・クリエイティブをイメージした鮮やかなパープルとピンクのアクセント */
+      --color-primary: #8B5CF6;
+      --color-primary-light: #A78BFA;
+      --color-primary-dark: #5B21B6;
+      --color-secondary: #EC4899;
+      --color-bg: #FFFFFF;
+      --color-bg-secondary: #F5F3FF;
+      --color-bg-dark: #1E1B4B;
+      --color-text: #1F2937;
+      --color-text-secondary: #4B5563;
+      --color-border: #E5E7EB;
+      --radius-lg: 1rem;
+      --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', 'Noto Sans JP', sans-serif; color: var(--color-text); line-height: 1.6; }
+
+    /* Header */
+    .header { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid var(--color-border); }
+    .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 72px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-weight: 700; font-size: 22px; color: var(--color-primary-dark); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .btn { padding: 10px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: 0.2s; cursor: pointer; }
+    .btn-primary { background: var(--color-primary); color: white; }
+    .btn-primary:hover { background: var(--color-primary-dark); }
+
+    /* Hero */
+    .hero { padding: 160px 24px 100px; background: radial-gradient(circle at top right, #F5F3FF, #FFFFFF); }
+    .hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+    .hero-tag { display: inline-block; padding: 4px 12px; background: var(--color-bg-secondary); color: var(--color-primary); border-radius: 20px; font-size: 14px; font-weight: 700; margin-bottom: 20px; }
+    .hero-title { font-size: 48px; font-weight: 800; line-height: 1.2; margin-bottom: 24px; color: var(--color-bg-dark); }
+    .hero-title span { color: var(--color-primary); }
+    .hero-desc { font-size: 18px; color: var(--color-text-secondary); margin-bottom: 32px; }
+
+    /* App Preview / GUI Simulation */
+    .app-window { background: #1e1e1e; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #333; }
+    .window-header { background: #333; padding: 10px 16px; display: flex; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-content { padding: 20px; color: #ddd; font-family: monospace; font-size: 13px; }
+    .gui-mockup { background: #2d2d2d; border-radius: 8px; padding: 20px; }
+    .gui-row { margin-bottom: 15px; }
+    .gui-label { color: #aaa; margin-bottom: 5px; display: block; }
+    .gui-input { width: 100%; background: #3d3d3d; border: 1px solid #555; padding: 8px; border-radius: 4px; color: white; }
+    .gui-btn-gen { background: var(--color-primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+    /* Features */
+    .section { padding: 100px 24px; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-title { text-align: center; font-size: 32px; font-weight: 700; margin-bottom: 60px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+    .feature-card { background: white; padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); transition: 0.3s; }
+    .feature-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-card); }
+    .feature-icon { font-size: 40px; margin-bottom: 20px; display: block; }
+    .feature-card h3 { margin-bottom: 15px; font-size: 20px; }
+
+    /* Setup Flow */
+    .setup-flow { background: var(--color-bg-dark); color: white; }
+    .step-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .step-item { text-align: center; position: relative; }
+    .step-num { width: 40px; height: 40px; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-weight: 700; }
+
+    /* Pricing */
+    .price-card { max-width: 400px; margin: 0 auto; background: white; border: 2px solid var(--color-primary); border-radius: 20px; padding: 50px; text-align: center; box-shadow: var(--shadow-card); }
+    .price-val { font-size: 48px; font-weight: 800; margin: 20px 0; color: var(--color-bg-dark); }
+    .price-val span { font-size: 16px; font-weight: 400; color: var(--color-text-secondary); }
+
+    /* Footer */
+    .footer { padding: 60px 24px; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-secondary); font-size: 14px; }
+
+    @media (max-width: 900px) {
+      .hero-inner, .feature-grid, .step-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#8B5CF6"/>
+        <path d="M12 10L22 16L12 22V10Z" fill="white"/>
+      </svg>
+      InsightMovie
+    </a>
+    <nav>
+      <a href="#" class="btn btn-primary">ダウンロード</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <span class="hero-tag">Windows専用デスクトップアプリ</span>
+      <h1 class="hero-title">マニュアル作成を<br><span>「聴く」体験</span>へ。</h1>
+      <p class="hero-desc">
+        ShortMaker Studioエンジン搭載。テキストを入力するだけで、プロ級の合成音声付き動画・マニュアルが完成。ITリテラシー不要、インストールしたその瞬間に音声生成が始まります。
+      </p>
+      <div style="display: flex; gap: 16px;">
+        <a href="#" class="btn btn-primary" style="padding: 16px 32px; font-size: 18px;">無料で始める</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="app-window">
+        <div class="window-header">
+          <div class="dot" style="background: #ff5f56;"></div>
+          <div class="dot" style="background: #ffbd2e;"></div>
+          <div class="dot" style="background: #27c93f;"></div>
+        </div>
+        <div class="window-content">
+          <div class="gui-mockup">
+            <div class="gui-row">
+              <span class="gui-label">ナレーションテキスト</span>
+              <div class="gui-input" style="height: 80px;">本日はInsightMovieのセットアップ手順についてご説明します...</div>
+            </div>
+            <div class="gui-row">
+              <span class="gui-label">キャラクター選択</span>
+              <div class="gui-input">青山流星 (Standard)</div>
+            </div>
+            <button class="gui-btn-gen">音声生成を実行</button>
+            <div style="margin-top: 15px; background: #444; height: 4px; border-radius: 2px;">
+              <div style="width: 75%; background: var(--color-primary); height: 100%;"></div>
+            </div>
+            <p style="font-size: 10px; margin-top: 10px; color: #888;">VoiceVox Engine: Connected (Port 50021)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-inner">
+    <h2 class="section-title">ビジネスを加速させる3つの強力な機能</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🚀</span>
+        <h3>ゼロ・セットアップ</h3>
+        <p class="feature-text">
+          複雑な環境構築は不要。インストーラーがVOICEVOXエンジンを自動で取得・構成。専門知識がなくても、最短3分で利用可能です。
+        </p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎙️</span>
+        <h3>青山流星を標準採用</h3>
+        <p class="feature-text">
+          ビジネスシーンに最適な「青山流星」をデフォルト話者に設定。落ち着いたトーンで、聞き取りやすいマニュアル動画を即座に作成。
+        </p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <h3>知的な自動検知</h3>
+        <p class="feature-text">
+          ポート競合を自動回避。システムが常に最適な通信ポートを探索し、VOICEVOXエンジンとの接続を自動で維持します。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section setup-flow">
+  <div class="section-inner">
+    <h2 class="section-title" style="color: white;">驚くほど簡単な導入プロセス</h2>
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <h4>インストール</h4>
+        <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">インストーラーを実行。必要なコンポーネントを自動で収集します。</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <h4>自動セットアップ</h4>
+        <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">規約に同意するだけで、VOICEVOXの取得から展開まで全自動で完了。</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <h4>エンジン起動</h4>
+        <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">アプリ起動時にバックグラウンドでエンジンを立ち上げ。設定不要です。</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <h4>生成開始</h4>
+        <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">テキストを入力して保存ボタンを押すだけ。音声マニュアルの完成です。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="price-card">
+      <span class="hero-tag">Business Edition</span>
+      <h3>ビジネス・ライセンス</h3>
+      <div class="price-val">¥9,800<span> / 1ライセンス（買い切り）</span></div>
+      <ul style="text-align: left; list-style: none; margin-bottom: 30px; font-size: 15px;">
+        <li style="margin-bottom: 12px;">✅ 商用利用・マニュアル作成OK</li>
+        <li style="margin-bottom: 12px;">✅ 全自動インストーラー同梱</li>
+        <li style="margin-bottom: 12px;">✅ 永続マイナーアップデート</li>
+        <li style="margin-bottom: 12px;">✅ 導入サポート付き</li>
+      </ul>
+      <a href="#" class="btn btn-primary" style="display: block; width: 100%; padding: 16px;">今すぐ購入</a>
+      <p style="font-size: 12px; color: #888; margin-top: 20px;">※VOICEVOXは本アプリには同梱されていません。インストール時に公式より自動取得されます。</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>&copy; 2026 Harmonic Insight / Erik Arthur. Produced by ShortMaker Studio.</p>
+</footer>
+
+</body>
+</html>

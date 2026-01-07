@@ -1,4 +1,4 @@
-# ShortMaker Studio - 実装サマリー
+# InsightMovie - 実装サマリー
 
 Windows向け商用デスクトップアプリケーションのインストーラー/ブートストラッパー実装完了
 
@@ -16,7 +16,7 @@ Windows向け商用デスクトップアプリケーションのインストー�
 
 ```
 InsightMovie/
-├── src/shortmaker_studio/          # アプリケーション本体
+├── src/insightmovie/               # アプリケーション本体
 │   ├── core/                        # コア機能
 │   │   ├── __init__.py
 │   │   └── config.py                # 設定管理（JSON）
@@ -33,10 +33,10 @@ InsightMovie/
 │   ├── __init__.py
 │   └── main.py                      # エントリーポイント
 ├── installer/
-│   ├── shortmaker_studio.iss        # Inno Setupスクリプト
+│   ├── insightmovie.iss             # Inno Setupスクリプト
 │   └── voicevox_downloader.py       # VOICEVOX自動ダウンロード
 ├── build/
-│   ├── shortmaker_studio.spec       # PyInstaller設定
+│   ├── insightmovie.spec            # PyInstaller設定
 │   └── build.bat                    # ビルド自動化スクリプト
 ├── docs/                            # ドキュメント
 │   ├── BUILD_GUIDE.md               # ビルド手順
@@ -52,25 +52,25 @@ InsightMovie/
 
 ### 1. アプリケーション本体（PySide6製GUI）
 
-#### VoiceVoxClient (`src/shortmaker_studio/voicevox/client.py`)
+#### VoiceVoxClient (`src/insightmovie/voicevox/client.py`)
 - ✅ エンジン自動検出（ポート50020-50100スキャン）
 - ✅ `/version` `/speakers` エンドポイント対応
 - ✅ 話者名から `speaker_id` 自動解決
 - ✅ 音声合成API実装
 
-#### EngineLauncher (`src/shortmaker_studio/voicevox/launcher.py`)
+#### EngineLauncher (`src/insightmovie/voicevox/launcher.py`)
 - ✅ run.exe自動検出（複数パス対応）
 - ✅ エンジン起動/停止
 - ✅ プロセス管理（psutil使用）
 - ✅ ポート指定起動対応
 
-#### SetupWizard (`src/shortmaker_studio/setup_wizard/wizard.py`)
+#### SetupWizard (`src/insightmovie/setup_wizard/wizard.py`)
 - ✅ 初回起動時の自動表示
 - ✅ エンジン検出ページ（自動検出・起動・手動設定）
 - ✅ 話者自動選択（青山流星）
 - ✅ 失敗時の1画面ガイド
 
-#### MainWindow (`src/shortmaker_studio/ui/main_window.py`)
+#### MainWindow (`src/insightmovie/ui/main_window.py`)
 - ✅ テキスト入力→音声生成UI
 - ✅ WAVファイル保存
 - ✅ ログ表示
@@ -78,7 +78,7 @@ InsightMovie/
 
 ### 2. Windowsインストーラー（Inno Setup）
 
-#### インストーラー機能 (`installer/shortmaker_studio.iss`)
+#### インストーラー機能 (`installer/insightmovie.iss`)
 - ✅ アプリ本体のインストール
 - ✅ VOICEVOX自動セットアップ（デフォルトON）
 - ✅ ユーザー同意チェックボックス
@@ -92,13 +92,13 @@ InsightMovie/
 #### ダウンローダー (`installer/voicevox_downloader.py`)
 - ✅ GitHub Releases APIから最新版取得
 - ✅ 公式配布元からダウンロード
-- ✅ ローカルに展開（%LOCALAPPDATA%\ShortMakerStudio\voicevox\）
+- ✅ ローカルに展開（%LOCALAPPDATA%\InsightMovie\voicevox\）
 - ✅ 進捗表示
 - ✅ run.exe検証
 
 ### 4. パッケージング
 
-#### PyInstaller (`build/shortmaker_studio.spec`)
+#### PyInstaller (`build/insightmovie.spec`)
 - ✅ 1フォルダ形式
 - ✅ PySide6依存関係含む
 - ✅ GUIアプリケーション設定
@@ -164,13 +164,13 @@ cd build
 build.bat
 
 # 3. 成果物確認
-# - build/dist/ShortMakerStudio/
-# - build/installer_output/ShortMakerStudio-Setup-1.0.0.exe
+# - build/dist/InsightMovie/
+# - build/installer_output/InsightMovie-Setup-1.0.0.exe
 ```
 
 ### インストール手順（エンドユーザー）
 
-1. `ShortMakerStudio-Setup-1.0.0.exe` 実行
+1. `InsightMovie-Setup-1.0.0.exe` 実行
 2. 「VOICEVOX自動セットアップ」にチェック
 3. 利用規約に同意
 4. インストール完了後、起動
@@ -231,12 +231,12 @@ build.bat
 - デフォルト50021を優先チェック
 
 ### 3. 設定保存先
-- `%LOCALAPPDATA%\ShortMakerStudio\`
+- `%LOCALAPPDATA%\InsightMovie\`
 - JSON形式で読みやすい
 - 管理者権限不要
 
 ### 4. VOICEVOX配置先
-- `%LOCALAPPDATA%\ShortMakerStudio\voicevox\`
+- `%LOCALAPPDATA%\InsightMovie\voicevox\`
 - ユーザー毎に独立
 - アンインストール時の選択可能
 
@@ -272,11 +272,11 @@ build.bat
 ## 📦 最終納品物
 
 ### /installer フォルダ
-- `shortmaker_studio.iss` - Inno Setupスクリプト
+- `insightmovie.iss` - Inno Setupスクリプト
 - `voicevox_downloader.py` - 自動ダウンロードスクリプト
 
 ### /build フォルダ
-- `shortmaker_studio.spec` - PyInstaller設定
+- `insightmovie.spec` - PyInstaller設定
 - `build.bat` - ビルド自動化
 
 ### /docs フォルダ

@@ -29,7 +29,7 @@ class VoicevoxDownloader:
         else:
             # デフォルトはユーザーのローカルAppData
             local_appdata = os.environ.get("LOCALAPPDATA", "")
-            self.install_dir = Path(local_appdata) / "ShortMakerStudio" / "voicevox"
+            self.install_dir = Path(local_appdata) / "InsightMovie" / "voicevox"
 
         self.install_dir.mkdir(parents=True, exist_ok=True)
 

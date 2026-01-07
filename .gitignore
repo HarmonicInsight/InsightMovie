@@ -30,7 +30,7 @@ env/
 
 # PyInstaller
 *.manifest
-# *.spec  # コメントアウト: build/shortmaker_studio.specはコミット対象
+# *.spec  # コメントアウト: build/insightmovie.specはコミット対象
 
 # IDEs
 .vscode/
@@ -60,7 +60,7 @@ config.json
 *.log
 
 # VOICEVOX downloaded files (should not be committed)
-# Note: src/shortmaker_studio/voicevox/ is source code and should be committed
+# Note: src/insightmovie/voicevox/ is source code and should be committed
 **/voicevox/run.exe
 **/voicevox/*.zip
 # Only ignore VOICEVOX in specific locations

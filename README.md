@@ -1,10 +1,10 @@
-# ShortMaker Studio
+# InsightMovie
 
 VOICEVOX powered 音声生成デスクトップアプリケーション
 
 ## 概要
 
-ShortMaker Studioは、ITリテラシーが低いユーザーでも簡単に音声合成ができるWindowsデスクトップアプリケーションです。
+InsightMovieは、ITリテラシーが低いユーザーでも簡単に音声合成ができるWindowsデスクトップアプリケーションです。
 VOICEVOXエンジンを使用して、高品質な音声を生成できます。
 
 ### 主な機能
@@ -19,9 +19,9 @@ VOICEVOXエンジンを使用して、高品質な音声を生成できます。
 
 ### 1. インストーラーのダウンロード
 
-[Releases](https://github.com/yourusername/shortmaker-studio/releases)から最新版のインストーラーをダウンロードしてください。
+[Releases](https://github.com/yourusername/insightmovie/releases)から最新版のインストーラーをダウンロードしてください。
 
-- `ShortMakerStudio-Setup-1.0.0.exe`
+- `InsightMovie-Setup-1.0.0.exe`
 
 ### 2. インストール実行
 
@@ -34,7 +34,7 @@ VOICEVOXエンジンを使用して、高品質な音声を生成できます。
 - VOICEVOXは**無断再配布禁止**のため、アプリには同梱されていません
 - インストーラーが**公式配布元**（https://voicevox.hiroshiba.jp/）から自動的にダウンロードします
 - インストール時に利用規約への同意が必要です
-- ダウンロード先: `%LOCALAPPDATA%\ShortMakerStudio\voicevox\`
+- ダウンロード先: `%LOCALAPPDATA%\InsightMovie\voicevox\`
 
 ### 4. オフライン環境の場合
 
@@ -45,14 +45,14 @@ VOICEVOXエンジンを使用して、高品質な音声を生成できます。
    - Windows CPU版をダウンロード
 2. ダウンロードしたZIPファイルを展開
 3. 展開したフォルダを以下の場所に配置：
-   - `%LOCALAPPDATA%\ShortMakerStudio\voicevox\`
+   - `%LOCALAPPDATA%\InsightMovie\voicevox\`
 4. アプリを起動し、セットアップウィザードで「手動設定」を選択
 
 ## 使い方
 
 ### 初回起動
 
-1. ShortMaker Studioを起動
+1. InsightMovieを起動
 2. セットアップウィザードが表示されます：
    - VOICEVOXエンジンの検出
    - デフォルト話者の設定（青山流星）
@@ -71,14 +71,14 @@ VOICEVOXエンジンを使用して、高品質な音声を生成できます。
 
 1. セットアップウィザードで「エンジンを起動」ボタンをクリック
 2. それでも見つからない場合は「手動設定」でrun.exeを指定
-3. エンジンのパス例: `%LOCALAPPDATA%\ShortMakerStudio\voicevox\run.exe`
+3. エンジンのパス例: `%LOCALAPPDATA%\InsightMovie\voicevox\run.exe`
 
 #### ポートが50021でない場合
 
 - アプリは自動的にポート50020-50100をスキャンします
 - 検出されたエンジンに自動接続します
 - 手動でポートを変更したい場合は設定ファイルを編集：
-  - `%LOCALAPPDATA%\ShortMakerStudio\config.json`
+  - `%LOCALAPPDATA%\InsightMovie\config.json`
 
 #### エンジンが起動しない
 
@@ -93,8 +93,8 @@ VOICEVOXエンジンを使用して、高品質な音声を生成できます。
 
 ```bash
 # リポジトリクローン
-git clone https://github.com/yourusername/shortmaker-studio.git
-cd shortmaker-studio
+git clone https://github.com/yourusername/insightmovie.git
+cd insightmovie
 
 # 依存関係インストール
 pip install -r requirements.txt
@@ -104,7 +104,7 @@ pip install -r requirements.txt
 
 ```bash
 # 開発モードで実行
-python -m src.shortmaker_studio.main
+python -m src.insightmovie.main
 ```
 
 ### ビルド
@@ -114,24 +114,24 @@ python -m src.shortmaker_studio.main
 ```bash
 # PyInstallerでアプリケーションをビルド
 cd build
-pyinstaller shortmaker_studio.spec
+pyinstaller insightmovie.spec
 
-# ビルド結果: build/dist/ShortMakerStudio/
+# ビルド結果: build/dist/InsightMovie/
 ```
 
 #### インストーラー作成
 
 1. [Inno Setup](https://jrsoftware.org/isdl.php)をインストール
-2. `installer/shortmaker_studio.iss`を開く
+2. `installer/insightmovie.iss`を開く
 3. コンパイル実行
-4. インストーラー生成: `build/installer_output/ShortMakerStudio-Setup-1.0.0.exe`
+4. インストーラー生成: `build/installer_output/InsightMovie-Setup-1.0.0.exe`
 
 ### プロジェクト構造
 
 ```
 InsightMovie/
 ├── src/
-│   └── shortmaker_studio/
+│   └── insightmovie/
 │       ├── core/              # コア機能（設定管理など）
 │       │   ├── __init__.py
 │       │   └── config.py
@@ -148,10 +148,10 @@ InsightMovie/
 │       ├── __init__.py
 │       └── main.py            # エントリーポイント
 ├── installer/
-│   ├── shortmaker_studio.iss  # Inno Setupスクリプト
+│   ├── insightmovie.iss       # Inno Setupスクリプト
 │   └── voicevox_downloader.py # VOICEVOX自動ダウンロード
 ├── build/
-│   └── shortmaker_studio.spec # PyInstaller設定
+│   └── insightmovie.spec      # PyInstaller設定
 ├── docs/                       # ドキュメント
 ├── requirements.txt
 └── README.md
@@ -187,7 +187,7 @@ InsightMovie/
 
 1. [よくある質問](docs/FAQ.md)
 2. [トラブルシューティング](docs/TROUBLESHOOTING.md)
-3. [GitHub Issues](https://github.com/yourusername/shortmaker-studio/issues)
+3. [GitHub Issues](https://github.com/yourusername/insightmovie/issues)
 
 ## 貢献
 

@@ -1,6 +1,6 @@
 # ビルドガイド
 
-ShortMaker Studioのビルドとインストーラー作成手順
+InsightMovieのビルドとインストーラー作成手順
 
 ## 前提条件
 
@@ -20,8 +20,8 @@ ShortMaker Studioのビルドとインストーラー作成手順
 
 ```bash
 # リポジトリクローン
-git clone https://github.com/yourusername/shortmaker-studio.git
-cd shortmaker-studio
+git clone https://github.com/yourusername/insightmovie.git
+cd insightmovie
 
 # 仮想環境作成（推奨）
 python -m venv venv
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 ```bash
 # メインアプリケーション実行
-python -m src.shortmaker_studio.main
+python -m src.insightmovie.main
 ```
 
 **確認事項:**
@@ -54,22 +54,22 @@ python -m src.shortmaker_studio.main
 cd build
 
 # PyInstallerでビルド実行
-pyinstaller shortmaker_studio.spec
+pyinstaller insightmovie.spec
 
 # ビルド完了後、以下に出力される:
-# build/dist/ShortMakerStudio/
+# build/dist/InsightMovie/
 ```
 
 **ビルド成果物:**
-- `dist/ShortMakerStudio/ShortMakerStudio.exe` - メイン実行ファイル
-- `dist/ShortMakerStudio/` - 必要なDLLや依存ファイル
+- `dist/InsightMovie/InsightMovie.exe` - メイン実行ファイル
+- `dist/InsightMovie/` - 必要なDLLや依存ファイル
 
 ### 3. ビルド結果の動作確認
 
 ```bash
 # ビルドしたアプリケーションを実行
-cd dist\ShortMakerStudio
-ShortMakerStudio.exe
+cd dist\InsightMovie
+InsightMovie.exe
 ```
 
 **確認事項:**
@@ -87,17 +87,17 @@ cd ..\..\installer
 
 # Inno Setup Compiler を使ってコンパイル
 # （GUIから実行する場合）
-# 1. shortmaker_studio.iss をInno Setup Compilerで開く
+# 1. insightmovie.iss をInno Setup Compilerで開く
 # 2. メニューから Build > Compile を選択
 
 # （コマンドラインから実行する場合）
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" shortmaker_studio.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" insightmovie.iss
 ```
 
 #### 4.2 インストーラー出力確認
 
 ```
-build/installer_output/ShortMakerStudio-Setup-1.0.0.exe
+build/installer_output/InsightMovie-Setup-1.0.0.exe
 ```
 
 ### 5. インストーラーのテスト
@@ -120,24 +120,24 @@ build/installer_output/ShortMakerStudio-Setup-1.0.0.exe
 
 **期待される動作:**
 1. インストール中に「VOICEVOXエンジンをダウンロード中...」と表示
-2. `%LOCALAPPDATA%\ShortMakerStudio\voicevox\` にダウンロード
+2. `%LOCALAPPDATA%\InsightMovie\voicevox\` にダウンロード
 3. ZIPが自動展開される
 4. run.exeが配置される
 
 **確認方法:**
 ```cmd
 # ダウンロード先を確認
-dir %LOCALAPPDATA%\ShortMakerStudio\voicevox
+dir %LOCALAPPDATA%\InsightMovie\voicevox
 
 # run.exeの存在確認
-where /R %LOCALAPPDATA%\ShortMakerStudio\voicevox run.exe
+where /R %LOCALAPPDATA%\InsightMovie\voicevox run.exe
 ```
 
 #### 5.3 アプリケーション起動テスト
 
 インストール後、アプリケーションを起動：
 
-1. スタートメニューから「ShortMaker Studio」を起動
+1. スタートメニューから「InsightMovie」を起動
 2. セットアップウィザードが表示される
 3. VOICEVOXエンジンが自動検出される
 4. 「青山流星」が自動選択される
@@ -159,7 +159,7 @@ where /R %LOCALAPPDATA%\ShortMakerStudio\voicevox run.exe
 
 ```bash
 # hiddenimportsに追加
-# shortmaker_studio.spec を編集:
+# insightmovie.spec を編集:
 hiddenimports=[
     'PySide6.QtCore',
     'PySide6.QtGui',
@@ -180,9 +180,9 @@ pip install PySide6
 
 #### エラー: "Source file not found"
 
-- `shortmaker_studio.iss` の `Source` パスを確認
+- `insightmovie.iss` の `Source` パスを確認
 - PyInstallerのビルドが完了しているか確認
-- `build/dist/ShortMakerStudio/` が存在するか確認
+- `build/dist/InsightMovie/` が存在するか確認
 
 #### エラー: "Unable to execute file"
 
@@ -215,8 +215,8 @@ python voicevox_downloader.py --install-dir "C:\test_voicevox"
 
 以下のファイルでバージョン番号を更新：
 
-- `src/shortmaker_studio/__init__.py` - `__version__`
-- `installer/shortmaker_studio.iss` - `#define MyAppVersion`
+- `src/insightmovie/__init__.py` - `__version__`
+- `installer/insightmovie.iss` - `#define MyAppVersion`
 - `README.md` - バージョン番号
 
 ### 2. 変更履歴の更新
@@ -272,21 +272,21 @@ git push origin v1.0.0
 
 ```batch
 @echo off
-echo ShortMaker Studio Build Script
+echo InsightMovie Build Script
 echo ==============================
 
 cd /d %~dp0
 
 echo [1/3] Building with PyInstaller...
-pyinstaller shortmaker_studio.spec
+pyinstaller insightmovie.spec
 if %errorlevel% neq 0 goto error
 
 echo [2/3] Testing build...
-dist\ShortMakerStudio\ShortMakerStudio.exe --version
+dist\InsightMovie\InsightMovie.exe --version
 if %errorlevel% neq 0 goto error
 
 echo [3/3] Creating installer...
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\installer\shortmaker_studio.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\installer\insightmovie.iss
 if %errorlevel% neq 0 goto error
 
 echo.
@@ -307,6 +307,6 @@ exit /b 1
 
 ## まとめ
 
-これで ShortMaker Studio のビルドとインストーラー作成が完了です。
+これで InsightMovie のビルドとインストーラー作成が完了です。
 
 質問や問題がある場合は、GitHub Issuesで報告してください。

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>InsightMovie｜テキストから音声・動画制作を自動化するWindowsアプリ</title>
+  <meta name="description" content="InsightMovieは、台本（テキスト）から音声生成を起点に、将来的な自動動画編集までを見据えたWindows向け制作ツールです。VOICEVOXは同梱せず公式配布元から安全に取得。初心者でも「インストール→起動→すぐ音声生成」まで迷わせません。" />
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif;margin:0;color:#111;line-height:1.75;background:#fff}
+    header,section,footer{max-width:1100px;margin:0 auto;padding:56px 20px}
+    .hero{padding-top:72px}
+    .badge{display:inline-block;font-size:12px;border:1px solid #ddd;border-radius:999px;padding:6px 10px;margin-bottom:14px}
+    h1{font-size:42px;line-height:1.15;margin:0 0 16px}
+    h2{font-size:28px;margin:0 0 16px}
+    h3{font-size:18px;margin:22px 0 10px}
+    p{margin:10px 0}
+    .sub{font-size:18px;color:#333;max-width:820px}
+    .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+    .btn{display:inline-block;border-radius:12px;padding:12px 16px;text-decoration:none;font-weight:700}
+    .primary{background:#111;color:#fff}
+    .ghost{border:1px solid #bbb;color:#111}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+    .card{border:1px solid #e6e6e6;border-radius:16px;padding:16px;background:#fff}
+    .muted{color:#555}
+    .two{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:start}
+    .note{border-left:4px solid #111;padding:10px 12px;background:#fafafa;border-radius:12px}
+    ul{padding-left:18px}
+    code,pre{background:#f6f6f6;border-radius:10px}
+    pre{padding:14px;overflow:auto}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .pill{border:1px solid #e2e2e2;border-radius:999px;padding:8px 10px;font-size:13px}
+    @media (max-width:860px){ .grid{grid-template-columns:1fr} .two{grid-template-columns:1fr} h1{font-size:34px} }
+  </style>
+</head>
+
+<body>
+
+<header class="hero">
+  <div class="badge">Windowsデスクトップアプリ｜ローカル処理｜初心者UX重視</div>
+  <h1>InsightMovie</h1>
+  <p class="sub">
+    台本（テキスト）を書くだけで、まず<strong>音声生成</strong>まで最短到達。<br/>
+    そして次の一手として、<strong>字幕・画像スライド・自動動画編集</strong>へ拡張できる制作基盤です。
+  </p>
+
+  <div class="cta">
+    <a class="btn primary" href="#download">ダウンロード / 体験版</a>
+    <a class="btn ghost" href="#how">仕組みを見る</a>
+    <a class="btn ghost" href="#faq">よくある質問</a>
+  </div>
+
+  <div class="kpi">
+    <div class="pill">インストール→起動→すぐ音声生成</div>
+    <div class="pill">VOICEVOXは同梱しない（公式から取得）</div>
+    <div class="pill">ポート自動検出（50020–50100）</div>
+    <div class="pill">青山流星を自動選択</div>
+  </div>
+</header>
+
+<section>
+  <h2>こんな悩みを解決します</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>動画制作が属人化して止まる</h3>
+      <p class="muted">担当者しか編集できず、修正が遅い。外注も高い。</p>
+      <p><strong>台本中心</strong>の運用に変えることで、修正と改善が回る制作フローへ。</p>
+    </div>
+    <div class="card">
+      <h3>音声生成の環境構築が面倒</h3>
+      <p class="muted">VOICEVOXの導入、起動、接続…で詰まる。</p>
+      <p><strong>セットアップウィザード</strong>が、迷いどころを全部ガイドします。</p>
+    </div>
+    <div class="card">
+      <h3>社内マニュアルを動画化したい</h3>
+      <p class="muted">ナレーター外注は高額。修正のたびにコスト増。</p>
+      <p><strong>ローカルで何度でも生成</strong>でき、機密文書でも運用しやすい設計です。</p>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <h2>主な特長</h2>
+
+  <div class="grid">
+    <div class="card">
+      <h3>① 初心者でも迷わない起動体験</h3>
+      <ul>
+        <li>初回起動時に<strong>セットアップウィザード</strong>を自動表示</li>
+        <li>VOICEVOX未起動なら：<strong>起動する / 再検索 / 手動設定</strong>を1画面で提示</li>
+        <li>見つかったら<strong>青山流星</strong>を自動選択</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>② VOICEVOXは同梱せず、公式から取得</h3>
+      <ul>
+        <li>無断再配布禁止に対応：インストーラーに同梱しません</li>
+        <li>ユーザー同意（チェックボックス）＋公式リンク導線</li>
+        <li>端末上で<strong>公式配布元から自動ダウンロード</strong>してセットアップ</li>
+      </ul>
+      <div class="note">
+        <strong>重要：</strong>VOICEVOXはユーザー端末上で取得・セットアップされます。オフライン環境は手動手順あり。
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>③ エンジン接続の“つまずき”を潰す</h3>
+      <ul>
+        <li>まず <code>127.0.0.1:50021</code> を確認</li>
+        <li>ダメなら <strong>50020–50100</strong> を高速スキャン</li>
+        <li><code>/version</code> / <code>/speakers</code> で確定</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>④ ローカルで完結（機密文書にも）</h3>
+      <p>クラウドに台本を投げずに運用できます。社内マニュアルや製品説明など、外部共有しづらい素材でも扱いやすい設計です。</p>
+    </div>
+
+    <div class="card">
+      <h3>⑤ Windows向け配布が簡単</h3>
+      <ul>
+        <li><strong>PyInstaller</strong>で配布可能な形にパッケージ</li>
+        <li><strong>Inno Setup</strong>でインストーラー作成（ブートストラッパー設計）</li>
+        <li>インストール完了後「今すぐ起動」チェック</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>⑥ ffmpeg も導入チェック可能</h3>
+      <p>将来的な動画出力（MP4）を見据えて、ffmpeg の有無をチェックし、未導入なら案内（または公式取得導線）を提供します。</p>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <h2>仕組み（3ステップ）</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Step 1：インストール</h3>
+      <ul>
+        <li>アプリ本体をインストール</li>
+        <li>（任意・初期ON）VOICEVOX 自動セットアップ：公式配布元から取得</li>
+        <li>（任意）ffmpeg導入チェック</li>
+      </ul>
+
+      <h3>Step 2：初回起動ウィザード</h3>
+      <ul>
+        <li>VOICEVOXの起動状況をチェック</li>
+        <li>未起動なら「起動する」を提示</li>
+        <li>ポート自動探索で確実に接続</li>
+      </ul>
+
+      <h3>Step 3：音声生成</h3>
+      <ul>
+        <li>テキスト入力 → 音声合成</li>
+        <li>WAV保存</li>
+        <li>（拡張予定）字幕・動画生成へ</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>保存先（例）</h3>
+      <p class="muted">VOICEVOXエンジン取得・展開先</p>
+      <pre><code>%LOCALAPPDATA%\InsightMovie\voicevox\</code></pre>
+
+      <h3>接続確認（例）</h3>
+      <pre><code>http://127.0.0.1:50021/version
+http://127.0.0.1:50021/speakers</code></pre>
+
+      <h3>オフライン環境</h3>
+      <p class="muted">自動取得ができない場合は、手動セットアップ手順をドキュメントで案内します。</p>
+    </div>
+  </div>
+</section>
+
+<section id="usecases">
+  <h2>活用シーン</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>社内マニュアル / 操作手順</h3>
+      <p class="muted">文章を音声化して、研修動画・操作ガイドに転用。</p>
+    </div>
+    <div class="card">
+      <h3>eラーニング / 研修コンテンツ</h3>
+      <p class="muted">台本修正＝そのまま音声差し替え。更新が楽になります。</p>
+    </div>
+    <div class="card">
+      <h3>YouTube / 商品紹介（ライト層）</h3>
+      <p class="muted">テキスト中心の制作で、動画制作のボトルネックを解消。</p>
+    </div>
+  </div>
+</section>
+
+<section id="requirements">
+  <h2>動作環境</h2>
+  <div class="card">
+    <ul>
+      <li><strong>OS：</strong>Windows 10 / 11（64bit）</li>
+      <li><strong>メモリ：</strong>4GB以上（推奨8GB）</li>
+      <li><strong>ストレージ：</strong>2GB以上の空き</li>
+      <li><strong>ネット接続：</strong>初回セットアップ時（VOICEVOX自動取得のため）</li>
+    </ul>
+    <p class="muted">※オフライン環境の場合は手動セットアップが必要です。</p>
+  </div>
+</section>
+
+<section id="compliance">
+  <h2>コンプライアンス（重要）</h2>
+  <div class="card">
+    <p>
+      InsightMovie は、VOICEVOX を<strong>同梱・再配布しません</strong>。<br/>
+      インストーラーからユーザー端末上で、<strong>公式配布元から取得</strong>する方式を採用しています。
+    </p>
+    <ul>
+      <li>ユーザー同意（チェックボックス）</li>
+      <li>公式リンク・規約確認導線</li>
+      <li>取得先と保存先を明示</li>
+    </ul>
+  </div>
+</section>
+
+<section id="pricing">
+  <h2>料金（案）</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Starter</h3>
+      <p class="muted">まず試す方向け</p>
+      <p><strong>無料 / 体験版</strong></p>
+      <ul>
+        <li>音声生成（基本）</li>
+        <li>セットアップウィザード</li>
+        <li>コミュニティサポート</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Business</h3>
+      <p class="muted">マニュアル作成・業務利用</p>
+      <p><strong>月額 1,980円</strong>（または買い切り 9,800円）</p>
+      <ul>
+        <li>業務利用向け設定・テンプレ（拡張）</li>
+        <li>メールサポート</li>
+        <li>（今後）字幕生成・一括処理</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Enterprise</h3>
+      <p class="muted">複数PC・導入支援が必要</p>
+      <p><strong>月額 9,800円</strong>（または年額 98,000円）</p>
+      <ul>
+        <li>複数PCライセンス</li>
+        <li>優先サポート</li>
+        <li>導入支援（オプション）</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted">※実際の提供機能に合わせてプラン内容は調整してください（ここは販売設計パートです）。</p>
+</section>
+
+<section id="download">
+  <h2>ダウンロード / 導入</h2>
+  <div class="card">
+    <p><strong>InsightMovie for Windows</strong></p>
+    <ul>
+      <li>インストーラー実行 →（推奨）VOICEVOX自動セットアップON → 完了</li>
+      <li>初回起動ウィザードに従い「起動→検出→音声生成」</li>
+    </ul>
+    <div class="cta">
+      <a class="btn primary" href="#">ダウンロード（準備中）</a>
+      <a class="btn ghost" href="#faq">FAQを見る</a>
+    </div>
+    <p class="muted">※配布URL（GitHub Releases / 自社サイト / Booth など）に差し替えてください。</p>
+  </div>
+</section>
+
+<section id="faq">
+  <h2>よくある質問</h2>
+  <div class="card">
+    <h3>Q. VOICEVOXは同梱されていますか？</h3>
+    <p>A. 同梱しません。インストーラーから公式配布元を案内し、ユーザー端末上で取得・セットアップします。</p>
+
+    <h3>Q. 50021でつながりません。</h3>
+    <p>A. InsightMovieは自動で 50020–50100 を探索し、<code>/version</code> と <code>/speakers</code> で検出します。ウィザードの「再検索」をお試しください。</p>
+
+    <h3>Q. オフライン環境でも使えますか？</h3>
+    <p>A. 可能です。初回のVOICEVOX自動取得はできないため、手動セットアップ手順に従って導入してください。</p>
+
+    <h3>Q. 何が“画期的”なの？</h3>
+    <p>A. 目指すのは「編集ソフトを操作する」から「台本で制作を回す」への転換です。音声生成を確実に到達させ、字幕・動画へ拡張できる基盤として設計しています。</p>
+  </div>
+</section>
+
+<footer>
+  <p class="muted">© InsightMovie / Harmonic Insight. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
