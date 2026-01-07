@@ -358,6 +358,12 @@ def get_stylesheet() -> str:
         background-color: {COLOR_PALETTE['bg_secondary']};
     }}
 
+    /* スクロールエリア */
+    QScrollArea {{
+        background-color: transparent;
+        border: none;
+    }}
+
     /* リストウィジェット */
     QListWidget {{
         background-color: {COLOR_PALETTE['bg_card']};
