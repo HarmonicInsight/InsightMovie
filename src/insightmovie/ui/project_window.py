@@ -70,17 +70,20 @@ class VideoGenerationThread(QThread):
                 total_duration = scene.fixed_seconds  # シーンの長さ（無音含む）
 
                 if scene.has_narration:
+                    # シーンごとの話者ID（指定がなければプロジェクトデフォルトを使用）
+                    scene_speaker_id = scene.speaker_id if scene.speaker_id is not None else self.speaker_id
+
                     # キャッシュチェック
-                    if self.audio_cache.exists(scene.narration_text, self.speaker_id):
+                    if self.audio_cache.exists(scene.narration_text, scene_speaker_id):
                         self.progress.emit(f"  音声をキャッシュから取得中...")
-                        audio_data = self.audio_cache.load(scene.narration_text, self.speaker_id)
+                        audio_data = self.audio_cache.load(scene.narration_text, scene_speaker_id)
                         audio_path = self.audio_cache.get_cache_path(
                             scene.narration_text,
-                            self.speaker_id
+                            scene_speaker_id
                         )
                         duration = self.audio_cache.get_duration(
                             scene.narration_text,
-                            self.speaker_id
+                            scene_speaker_id
                         )
                         self.progress.emit(f"  ✓ 音声取得: {Path(audio_path).name} ({duration:.2f}秒)")
                     else:
@@ -88,7 +91,7 @@ class VideoGenerationThread(QThread):
                         self.progress.emit(f"  音声を生成中（VOICEVOX）...")
                         audio_data = self.voicevox.generate_audio(
                             scene.narration_text,
-                            self.speaker_id
+                            scene_speaker_id
                         )
                         if not audio_data:
                             self.progress.emit(f"  ✗ 音声生成失敗")
@@ -97,7 +100,7 @@ class VideoGenerationThread(QThread):
 
                         audio_path = self.audio_cache.save(
                             scene.narration_text,
-                            self.speaker_id,
+                            scene_speaker_id,
                             audio_data
                         )
                         duration = AudioCache.get_audio_duration_from_bytes(audio_data)
@@ -397,6 +400,9 @@ class ProjectWindow(QMainWindow):
 
         central_widget.setLayout(layout)
 
+        # シーン用の話者コンボボックスを初期化（load_speakersでspeaker_stylesが設定された後）
+        self.load_scene_speakers()
+
     def create_scene_list_panel(self) -> QWidget:
         """シーン一覧パネル作成"""
         panel = QGroupBox("シーン一覧")
@@ -604,6 +610,18 @@ class ProjectWindow(QMainWindow):
         duration_layout.addStretch()
         layout.addLayout(duration_layout)
 
+        # 話者選択（シーンごと）
+        speaker_layout = QHBoxLayout()
+        speaker_layout.addWidget(QLabel("話者:"))
+
+        self.scene_speaker_combo = QComboBox()
+        self.scene_speaker_combo.setMinimumWidth(200)
+        self.scene_speaker_combo.currentIndexChanged.connect(self.on_scene_speaker_changed)
+        speaker_layout.addWidget(self.scene_speaker_combo)
+
+        speaker_layout.addStretch()
+        layout.addLayout(speaker_layout)
+
         layout.addStretch()
 
         # スクロールエリアにコンテンツを設定
@@ -696,11 +714,35 @@ class ProjectWindow(QMainWindow):
             self.log(f"話者一覧の取得に失敗: {e}")
 
     def on_speaker_changed(self, index: int):
-        """話者選択変更時"""
+        """話者選択変更時（プロジェクトデフォルト）"""
         display_name = self.speaker_combo.currentText()
         if display_name in self.speaker_styles:
             self.speaker_id = self.speaker_styles[display_name]
-            self.log(f"話者を変更: {display_name}")
+            self.log(f"デフォルト話者を変更: {display_name}")
+
+    def load_scene_speakers(self):
+        """シーン用の話者コンボボックスを初期化"""
+        self.scene_speaker_combo.clear()
+
+        # デフォルト選択肢を追加
+        self.scene_speaker_combo.addItem("(デフォルトを使用)")
+
+        # speaker_stylesから話者一覧を追加
+        for display_name in self.speaker_styles.keys():
+            self.scene_speaker_combo.addItem(display_name)
+
+    def on_scene_speaker_changed(self, index: int):
+        """シーンの話者選択変更時"""
+        if not self.current_scene:
+            return
+
+        display_name = self.scene_speaker_combo.currentText()
+        if display_name == "(デフォルトを使用)":
+            self.current_scene.speaker_id = None
+            self.log(f"シーンの話者: デフォルトを使用")
+        elif display_name in self.speaker_styles:
+            self.current_scene.speaker_id = self.speaker_styles[display_name]
+            self.log(f"シーンの話者を変更: {display_name}")
 
     def load_scene_list(self):
         """シーン一覧を読み込み"""
@@ -780,6 +822,26 @@ class ProjectWindow(QMainWindow):
 
         # スピンボックスの有効/無効を設定
         self.fixed_seconds_spin.setEnabled(self.current_scene.duration_mode == DurationMode.FIXED)
+
+        # 話者選択を設定
+        self.scene_speaker_combo.blockSignals(True)
+        if self.current_scene.speaker_id is None:
+            # デフォルトを使用
+            self.scene_speaker_combo.setCurrentIndex(0)
+        else:
+            # シーン固有の話者を選択
+            found = False
+            for display_name, style_id in self.speaker_styles.items():
+                if style_id == self.current_scene.speaker_id:
+                    index = self.scene_speaker_combo.findText(display_name)
+                    if index >= 0:
+                        self.scene_speaker_combo.setCurrentIndex(index)
+                        found = True
+                    break
+            if not found:
+                # 話者が見つからない場合はデフォルトにフォールバック
+                self.scene_speaker_combo.setCurrentIndex(0)
+        self.scene_speaker_combo.blockSignals(False)
 
     def select_media(self):
         """素材選択"""

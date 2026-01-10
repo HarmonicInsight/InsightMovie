@@ -36,6 +36,9 @@ class Scene:
     narration_text: str = ""  # 説明文（ナレーション）
     subtitle_text: str = ""   # 字幕
 
+    # 音声設定
+    speaker_id: Optional[int] = None  # シーン固有の話者ID（Noneの場合はプロジェクトデフォルトを使用）
+
     # 長さ設定
     duration_mode: DurationMode = DurationMode.AUTO
     fixed_seconds: float = 3.0
@@ -52,6 +55,7 @@ class Scene:
             'media_type': self.media_type.value,
             'narration_text': self.narration_text,
             'subtitle_text': self.subtitle_text,
+            'speaker_id': self.speaker_id,
             'duration_mode': self.duration_mode.value,
             'fixed_seconds': self.fixed_seconds,
             'audio_cache_path': self.audio_cache_path,
@@ -67,6 +71,7 @@ class Scene:
             media_type=MediaType(data.get('media_type', 'none')),
             narration_text=data.get('narration_text', ''),
             subtitle_text=data.get('subtitle_text', ''),
+            speaker_id=data.get('speaker_id'),
             duration_mode=DurationMode(data.get('duration_mode', 'auto')),
             fixed_seconds=data.get('fixed_seconds', 3.0),
             audio_cache_path=data.get('audio_cache_path'),
