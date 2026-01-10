@@ -38,6 +38,7 @@ class Scene:
 
     # 音声設定
     speaker_id: Optional[int] = None  # シーン固有の話者ID（Noneの場合はプロジェクトデフォルトを使用）
+    keep_original_audio: bool = False  # 動画の元音声を残す（会話と合成）
 
     # 長さ設定
     duration_mode: DurationMode = DurationMode.AUTO
@@ -56,6 +57,7 @@ class Scene:
             'narration_text': self.narration_text,
             'subtitle_text': self.subtitle_text,
             'speaker_id': self.speaker_id,
+            'keep_original_audio': self.keep_original_audio,
             'duration_mode': self.duration_mode.value,
             'fixed_seconds': self.fixed_seconds,
             'audio_cache_path': self.audio_cache_path,
@@ -72,6 +74,7 @@ class Scene:
             narration_text=data.get('narration_text', ''),
             subtitle_text=data.get('subtitle_text', ''),
             speaker_id=data.get('speaker_id'),
+            keep_original_audio=data.get('keep_original_audio', False),
             duration_mode=DurationMode(data.get('duration_mode', 'auto')),
             fixed_seconds=data.get('fixed_seconds', 3.0),
             audio_cache_path=data.get('audio_cache_path'),

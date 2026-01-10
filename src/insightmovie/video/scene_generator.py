@@ -113,12 +113,14 @@ class SceneGenerator:
             print(f"  解像度: {resolution}")
             print(f"  字幕: {scene.subtitle_text if scene.has_subtitle else 'なし'}")
             print(f"  音声: {'あり' if audio_path else 'なし'}")
+            print(f"  元音声保持: {'はい' if scene.keep_original_audio else 'いいえ'}")
 
             # 解像度をパース
             width, height = map(int, resolution.split('x'))
 
             # 一時ファイル
             temp_video = None
+            has_original_audio = False  # 元動画の音声があるか
 
             # ステップ1: メディアから基本動画を生成
             print(f"\n[1/3] 基本動画生成...")
@@ -133,13 +135,16 @@ class SceneGenerator:
                 )
             elif scene.has_media and scene.media_type == MediaType.VIDEO:
                 print(f"  動画をトリミング: {Path(scene.media_path).name}")
+                keep_audio = scene.keep_original_audio
                 temp_video = self._generate_from_video(
                     scene.media_path,
                     duration,
                     width,
                     height,
-                    fps
+                    fps,
+                    keep_audio=keep_audio
                 )
+                has_original_audio = keep_audio
             else:
                 # メディアなし：黒画面
                 print(f"  黒画面動画を生成")
@@ -177,7 +182,13 @@ class SceneGenerator:
 
             # ステップ3: 音声を合成
             print(f"\n[3/3] 音声処理...")
-            if audio_path:
+            if has_original_audio:
+                # 元動画の音声を残す場合：会話音声は追加せず、動画をそのまま使用
+                print(f"  元動画の音声を使用（会話音声は追加しない）")
+                import shutil
+                shutil.copy(temp_video, output_path)
+                success = True
+            elif audio_path:
                 print(f"  音声ファイル: {Path(audio_path).name}")
                 success = self._add_audio(temp_video, audio_path, output_path)
                 if success:
@@ -257,16 +268,18 @@ class SceneGenerator:
         duration: float,
         width: int,
         height: int,
-        fps: int
+        fps: int,
+        keep_audio: bool = False
     ) -> Optional[str]:
         """
-        動画を指定長さにトリミング・リサイズ
+        動画を指定長さにトリミング・リサイズ（ループ対応）
 
         Args:
             video_path: 動画ファイルパス
             duration: 長さ（秒）
             width, height: 解像度
             fps: フレームレート
+            keep_audio: 元音声を残すか
 
         Returns:
             生成された一時動画ファイルパス、失敗時はNone
@@ -275,17 +288,48 @@ class SceneGenerator:
         temp_path = temp_file.name
         temp_file.close()
 
-        args = [
-            "-i", video_path,
-            "-t", str(duration),
-            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            "-r", str(fps),
-            "-an",  # 音声なし（後で合成）
-            "-y",
-            temp_path
-        ]
+        # 動画の長さを取得
+        video_info = self.ffmpeg.get_video_info(video_path)
+        video_duration = video_info.get('duration', 0) if video_info else 0
+
+        if keep_audio:
+            # 元音声を残す場合：動画をそのまま最後まで使用（カットしない）
+            print(f"  元動画の音声を残す: 動画の長さ({video_duration:.2f}秒)をそのまま使用")
+            args = [
+                "-i", video_path,
+                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                "-r", str(fps),
+                "-c:a", "aac",
+                "-b:a", "192k",
+            ]
+        elif video_duration > 0 and video_duration < duration:
+            # 動画が短い場合はループ再生
+            print(f"  動画が短いためループ再生: {video_duration:.2f}秒 → {duration:.2f}秒")
+            args = [
+                "-stream_loop", "-1",
+                "-i", video_path,
+                "-t", str(duration),
+                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                "-r", str(fps),
+                "-an",
+            ]
+        else:
+            # 動画が長い場合は指定長さにカット
+            args = [
+                "-i", video_path,
+                "-t", str(duration),
+                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2",
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                "-r", str(fps),
+                "-an",
+            ]
+
+        args.extend(["-y", temp_path])
 
         if self.ffmpeg.run_command(args):
             return temp_path
@@ -405,16 +449,18 @@ class SceneGenerator:
         video_path: str,
         audio_path: str,
         output_path: str,
-        silence_padding: float = 1.0
+        silence_padding: float = 1.0,
+        mix_original: bool = False
     ) -> bool:
         """
         動画に音声を合成（前後に無音を追加）
 
         Args:
             video_path: 動画ファイルパス
-            audio_path: 音声ファイルパス
+            audio_path: 音声ファイルパス（VOICEVOX会話音声）
             output_path: 出力先mp4ファイルパス
             silence_padding: 前後に追加する無音秒数（デフォルト1秒）
+            mix_original: 元動画の音声とミックスするか
 
         Returns:
             成功したらTrue
@@ -432,16 +478,27 @@ class SceneGenerator:
 
         print(f"音声合成: {Path(video_path).name} + {Path(audio_path).name} -> {Path(output_path).name}")
         print(f"  前後無音: {silence_padding}秒ずつ")
+        print(f"  元音声ミックス: {'はい' if mix_original else 'いいえ'}")
 
-        # filter_complexで無音を生成し、音声の前後に結合
-        # anullsrc: 無音を生成
-        # concat: 音声を結合
-        filter_complex = (
-            f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo[main];"
-            f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence1];"
-            f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence2];"
-            f"[silence1][main][silence2]concat=n=3:v=0:a=1[aout]"
-        )
+        if mix_original:
+            # 元音声とVOICEVOX音声をミックス
+            # 元音声（0:a）と会話音声（1:a、前後無音付き）をamixで合成
+            filter_complex = (
+                f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo[voice];"
+                f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence1];"
+                f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence2];"
+                f"[silence1][voice][silence2]concat=n=3:v=0:a=1[voicewithpad];"
+                f"[0:a]aformat=sample_rates=44100:channel_layouts=stereo[original];"
+                f"[original][voicewithpad]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+            )
+        else:
+            # VOICEVOX音声のみ（従来の動作）
+            filter_complex = (
+                f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo[main];"
+                f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence1];"
+                f"anullsrc=r=44100:cl=stereo:d={silence_padding}[silence2];"
+                f"[silence1][main][silence2]concat=n=3:v=0:a=1[aout]"
+            )
 
         args = [
             "-i", video_path,

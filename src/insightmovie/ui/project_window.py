@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QListWidget, QListWidgetItem, QTextEdit,
     QLineEdit, QFileDialog, QMessageBox, QProgressBar, QGroupBox,
     QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QButtonGroup,
-    QGridLayout, QFrame, QScrollArea, QDialog
+    QGridLayout, QFrame, QScrollArea, QDialog, QCheckBox
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize
 from PySide6.QtGui import QPixmap, QIcon, QAction
@@ -200,8 +200,8 @@ class ProjectWindow(QMainWindow):
         self.speaker_styles: dict = {}  # 話者選択用
 
         self.setWindowTitle("InsightMovie - 新規プロジェクト")
-        self.setMinimumSize(1100, 700)
-        self.resize(1300, 900)  # 初期サイズ（リサイズ可能）
+        self.setMinimumSize(1100, 750)
+        self.resize(1300, 950)  # 初期サイズ（リサイズ可能）
 
         # Insightシリーズ統一テーマを適用
         self.setStyleSheet(get_stylesheet())
@@ -222,19 +222,19 @@ class ProjectWindow(QMainWindow):
         new_action.triggered.connect(self.new_project)
         file_menu.addAction(new_action)
 
-        open_action = QAction("プロジェクトを開く(&O)...", self)
+        open_action = QAction("設定ファイルを開く(&O)...", self)
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.open_project)
         file_menu.addAction(open_action)
 
         file_menu.addSeparator()
 
-        save_action = QAction("保存(&S)", self)
+        save_action = QAction("設定を上書き保存(&S)", self)
         save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self.save_project)
         file_menu.addAction(save_action)
 
-        save_as_action = QAction("名前を付けて保存(&A)...", self)
+        save_as_action = QAction("設定を別名で保存(&A)...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.triggered.connect(self.save_project_as)
         file_menu.addAction(save_as_action)
@@ -331,17 +331,17 @@ class ProjectWindow(QMainWindow):
         new_btn.clicked.connect(self.new_project)
         header_layout.addWidget(new_btn)
 
-        open_btn = QPushButton("開く")
+        open_btn = QPushButton("設定ファイルを開く")
         open_btn.setProperty("class", "secondary")
         open_btn.clicked.connect(self.open_project)
         header_layout.addWidget(open_btn)
 
-        save_btn = QPushButton("保存")
+        save_btn = QPushButton("設定を上書き保存")
         save_btn.setProperty("class", "secondary")
         save_btn.clicked.connect(self.save_project)
         header_layout.addWidget(save_btn)
 
-        save_as_btn = QPushButton("名前を付けて保存")
+        save_as_btn = QPushButton("設定を別名で保存")
         save_as_btn.setProperty("class", "secondary")
         save_as_btn.clicked.connect(self.save_project_as)
         header_layout.addWidget(save_as_btn)
@@ -374,7 +374,8 @@ class ProjectWindow(QMainWindow):
         splitter.addWidget(right_panel)
 
         splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 2)
+        splitter.setStretchFactor(1, 3)  # シーン編集を大きく
+        splitter.setSizes([200, 500])  # 初期サイズを設定
 
         # スプリッターのみ伸縮するように設定
         layout.addWidget(splitter, 1)  # stretch factor = 1
@@ -478,17 +479,21 @@ class ProjectWindow(QMainWindow):
         clear_media_btn.clicked.connect(self.clear_media)
         media_layout.addWidget(clear_media_btn)
 
+        # 元動画の音声を残すチェックボックス（動画選択時のみ有効）
+        self.keep_audio_checkbox = QCheckBox("元動画の音声を残す")
+        self.keep_audio_checkbox.setEnabled(False)
+        self.keep_audio_checkbox.toggled.connect(self.on_keep_audio_changed)
+        media_layout.addWidget(self.keep_audio_checkbox)
+
         media_layout.addStretch()
         layout.addLayout(media_layout)
 
-        # プレビューコンテナ（画像と字幕オーバーレイを重ねる）- 最大高さを設定
-        preview_wrapper = QWidget()
-        preview_wrapper_layout = QHBoxLayout(preview_wrapper)
-        preview_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        preview_wrapper_layout.addStretch()
+        # プレビューと説明文を横並びにするレイアウト
+        preview_narration_layout = QHBoxLayout()
 
+        # プレビューコンテナ（画像と字幕オーバーレイを重ねる）
         self.preview_container = QFrame()
-        self.preview_container.setFixedSize(160, 240)  # 高さを240pxに制限
+        self.preview_container.setFixedSize(120, 180)  # コンパクトに
         self.preview_container.setStyleSheet(f"""
             QFrame {{
                 background-color: #1a1a2e;
@@ -505,7 +510,7 @@ class ProjectWindow(QMainWindow):
         # 画像表示用ラベル（背面）
         self.thumbnail_label = QLabel()
         self.thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.thumbnail_label.setScaledContents(False)  # 手動でスケーリングするのでFalse
+        self.thumbnail_label.setScaledContents(False)
         self.thumbnail_label.setStyleSheet(f"""
             background-color: transparent;
             color: {COLOR_PALETTE['text_muted']};
@@ -536,26 +541,25 @@ class ProjectWindow(QMainWindow):
             border: none;
             border-radius: 0px;
         """)
-        self.subtitle_overlay.setMaximumHeight(40)
-        self.subtitle_overlay.hide()  # 初期状態は非表示（字幕がない時）
+        self.subtitle_overlay.setMaximumHeight(30)
+        self.subtitle_overlay.hide()
         preview_layout.addWidget(self.subtitle_overlay, 0, 0, Qt.AlignBottom)
 
-        preview_wrapper_layout.addWidget(self.preview_container)
-        preview_wrapper_layout.addStretch()
-        layout.addWidget(preview_wrapper)
+        preview_narration_layout.addWidget(self.preview_container)
 
-        # 説明文（ナレーション）- 横レイアウトに変更して枠を追加
-        narration_layout = QHBoxLayout()
-        narration_layout.addWidget(QLabel("説明文:"))
+        # 説明文（ナレーション）- 画像の右側に配置
+        narration_widget = QWidget()
+        narration_vlayout = QVBoxLayout(narration_widget)
+        narration_vlayout.setContentsMargins(0, 0, 0, 0)
+        narration_vlayout.setSpacing(4)
+
+        narration_vlayout.addWidget(QLabel("会話:"))
 
         self.narration_edit = QTextEdit()
         self.narration_edit.setPlaceholderText(
-            "ここに説明文を入力してください。\n"
-            "VOICEVOXで音声が生成され、その長さがシーンの長さになります。"
+            "ここに話をさせる内容を入力してください。"
         )
-        self.narration_edit.setMaximumHeight(100)
-        self.narration_edit.setMinimumHeight(80)
-        # 明確な枠線で入力範囲を視覚化
+        self.narration_edit.setMinimumHeight(140)
         self.narration_edit.setStyleSheet(f"""
             QTextEdit {{
                 background-color: {COLOR_PALETTE['bg_secondary']};
@@ -570,9 +574,11 @@ class ProjectWindow(QMainWindow):
             }}
         """)
         self.narration_edit.textChanged.connect(self.on_narration_changed)
-        narration_layout.addWidget(self.narration_edit)
+        narration_vlayout.addWidget(self.narration_edit)
 
-        layout.addLayout(narration_layout)
+        preview_narration_layout.addWidget(narration_widget, 1)  # 説明文が残りスペースを使用
+
+        layout.addLayout(preview_narration_layout)
 
         # 字幕
         subtitle_layout = QHBoxLayout()
@@ -621,6 +627,25 @@ class ProjectWindow(QMainWindow):
 
         speaker_layout.addStretch()
         layout.addLayout(speaker_layout)
+
+        # 動作説明
+        info_label = QLabel(
+            "【動作説明】\n"
+            "・画像: 会話の長さに合わせて静止画を表示\n"
+            "・動画: 会話より短い→ループ、長い→会話終了後も継続\n"
+            "・元音声を残す: 動画をそのまま使用（会話は追加しない）"
+        )
+        info_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLOR_PALETTE['text_muted']};
+                font-size: 9pt;
+                padding: 8px;
+                background-color: {COLOR_PALETTE['bg_secondary']};
+                border-radius: 4px;
+            }}
+        """)
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
 
         layout.addStretch()
 
@@ -744,6 +769,17 @@ class ProjectWindow(QMainWindow):
             self.current_scene.speaker_id = self.speaker_styles[display_name]
             self.log(f"シーンの話者を変更: {display_name}")
 
+    def on_keep_audio_changed(self, checked: bool):
+        """元音声保持チェックボックス変更時"""
+        if not self.current_scene:
+            return
+
+        self.current_scene.keep_original_audio = checked
+        if checked:
+            self.log("元動画の音声を残す設定に変更")
+        else:
+            self.log("元動画の音声を削除する設定に変更")
+
     def load_scene_list(self):
         """シーン一覧を読み込み"""
         self.scene_list.clear()
@@ -842,6 +878,13 @@ class ProjectWindow(QMainWindow):
                 # 話者が見つからない場合はデフォルトにフォールバック
                 self.scene_speaker_combo.setCurrentIndex(0)
         self.scene_speaker_combo.blockSignals(False)
+
+        # 元音声保持チェックボックス
+        self.keep_audio_checkbox.blockSignals(True)
+        is_video = self.current_scene.media_type == MediaType.VIDEO
+        self.keep_audio_checkbox.setEnabled(is_video)
+        self.keep_audio_checkbox.setChecked(self.current_scene.keep_original_audio if is_video else False)
+        self.keep_audio_checkbox.blockSignals(False)
 
     def select_media(self):
         """素材選択"""
@@ -1165,12 +1208,12 @@ class ProjectWindow(QMainWindow):
             self.log("新規プロジェクトを作成しました")
 
     def open_project(self):
-        """プロジェクトを開く"""
+        """設定ファイルを開く"""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "プロジェクトを開く",
+            "設定ファイルを開く",
             "",
-            "InsightMovieプロジェクト (*.improj);;JSONファイル (*.json);;すべてのファイル (*)"
+            "InsightMovie設定ファイル (*.improj);;JSONファイル (*.json);;すべてのファイル (*)"
         )
 
         if not file_path:
@@ -1248,7 +1291,7 @@ class ProjectWindow(QMainWindow):
         <h3>📝 ステップ1: プロジェクトの作成</h3>
         <ul>
             <li><b>新規プロジェクト</b>: メニューバーから「ファイル」→「新規プロジェクト」を選択</li>
-            <li><b>既存のプロジェクトを開く</b>: 「ファイル」→「プロジェクトを開く」から .improj ファイルを選択</li>
+            <li><b>既存の設定を開く</b>: 「ファイル」→「設定ファイルを開く」から .improj ファイルを選択</li>
         </ul>
 
         <h3>🎬 ステップ2: シーンの編集</h3>
@@ -1309,8 +1352,8 @@ class ProjectWindow(QMainWindow):
 
         <h2>2. プロジェクトの保存</h2>
         <ul>
-            <li><b>保存（Ctrl+S）</b>: 現在のプロジェクトを上書き保存</li>
-            <li><b>名前を付けて保存（Ctrl+Shift+S）</b>: 新しいファイル名で保存</li>
+            <li><b>設定を上書き保存（Ctrl+S）</b>: 現在の設定を上書き保存</li>
+            <li><b>設定を別名で保存（Ctrl+Shift+S）</b>: 新しいファイル名で保存</li>
             <li>プロジェクトファイル（.improj）には、シーン情報、素材パス、設定が保存されます</li>
         </ul>
 
@@ -1318,9 +1361,9 @@ class ProjectWindow(QMainWindow):
         <table border='1' cellpadding='5' style='border-collapse: collapse;'>
             <tr><th>機能</th><th>ショートカット</th></tr>
             <tr><td>新規プロジェクト</td><td>Ctrl+N</td></tr>
-            <tr><td>プロジェクトを開く</td><td>Ctrl+O</td></tr>
+            <tr><td>設定ファイルを開く</td><td>Ctrl+O</td></tr>
             <tr><td>保存</td><td>Ctrl+S</td></tr>
-            <tr><td>名前を付けて保存</td><td>Ctrl+Shift+S</td></tr>
+            <tr><td>設定を別名で保存</td><td>Ctrl+Shift+S</td></tr>
             <tr><td>シーンを追加</td><td>Ctrl+T</td></tr>
             <tr><td>シーンを削除</td><td>Delete</td></tr>
             <tr><td>シーンを上へ移動</td><td>Ctrl+Up</td></tr>

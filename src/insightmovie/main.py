@@ -5,11 +5,11 @@ InsightMovie - Main Entry Point
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 
-from .core import Config
-from .voicevox import VoiceVoxClient, EngineLauncher
-from .setup_wizard import SetupWizard
-from .ui import ProjectWindow
-from .video import FFmpegWrapper
+from insightmovie.core import Config
+from insightmovie.voicevox import VoiceVoxClient, EngineLauncher
+from insightmovie.setup_wizard import SetupWizard
+from insightmovie.ui import ProjectWindow
+from insightmovie.video import FFmpegWrapper
 
 
 def main():

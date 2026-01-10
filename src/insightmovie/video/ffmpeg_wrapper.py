@@ -4,8 +4,15 @@ ffmpeg ラッパー
 """
 import subprocess
 import shutil
+import sys
 from pathlib import Path
 from typing import Optional, List
+
+# Windowsでコンソールウィンドウを非表示にするフラグ
+if sys.platform == 'win32':
+    SUBPROCESS_FLAGS = subprocess.CREATE_NO_WINDOW
+else:
+    SUBPROCESS_FLAGS = 0
 
 
 class FFmpegNotFoundError(Exception):
@@ -43,8 +50,20 @@ class FFmpegWrapper:
         # アプリケーションディレクトリからの相対パス
         # PyInstallerでパッケージ化された場合も対応
         import sys
+
+        # PyInstaller one-fileモード: _MEIPASSに展開される
+        if getattr(sys, '_MEIPASS', None):
+            meipass_dir = Path(sys._MEIPASS)
+            meipass_paths = [
+                meipass_dir / "tools" / "ffmpeg" / "bin" / "ffmpeg.exe",
+                meipass_dir / "ffmpeg.exe",
+            ]
+            for path in meipass_paths:
+                if path.exists():
+                    return str(path)
+
         if getattr(sys, 'frozen', False):
-            # PyInstallerでパッケージ化されている場合
+            # PyInstaller one-folderモード
             app_dir = Path(sys.executable).parent
         else:
             # 開発環境
@@ -52,6 +71,7 @@ class FFmpegWrapper:
 
         relative_paths = [
             app_dir / "tools" / "ffmpeg" / "bin" / "ffmpeg.exe",
+            app_dir / "_internal" / "tools" / "ffmpeg" / "bin" / "ffmpeg.exe",
             app_dir / "ffmpeg" / "bin" / "ffmpeg.exe",
             app_dir / "bin" / "ffmpeg.exe",
         ]
@@ -85,7 +105,8 @@ class FFmpegWrapper:
                 [self.ffmpeg_path, "-version"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
+                creationflags=SUBPROCESS_FLAGS
             )
             return result.returncode == 0
         except Exception:
@@ -103,7 +124,8 @@ class FFmpegWrapper:
                 [self.ffmpeg_path, "-version"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
+                creationflags=SUBPROCESS_FLAGS
             )
             if result.returncode == 0:
                 # 最初の行からバージョンを抽出
@@ -130,7 +152,7 @@ class FFmpegWrapper:
             if show_output:
                 print(f"\nffmpegコマンド実行:")
                 print(f"  {' '.join([str(arg) for arg in cmd[:5]])} ... ({len(cmd)}個の引数)")
-                result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, creationflags=SUBPROCESS_FLAGS)
                 if result.stdout:
                     print(f"stdout: {result.stdout[:200]}")
                 if result.stderr:
@@ -142,7 +164,8 @@ class FFmpegWrapper:
                     cmd,
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
+                    creationflags=SUBPROCESS_FLAGS
                 )
             return result.returncode == 0
         except subprocess.CalledProcessError as e:
@@ -181,7 +204,8 @@ class FFmpegWrapper:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
-                text=True
+                text=True,
+                creationflags=SUBPROCESS_FLAGS
             )
 
             # ffmpegは動画情報をstderrに出力する
