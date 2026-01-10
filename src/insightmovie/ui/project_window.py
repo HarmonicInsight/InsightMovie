@@ -322,28 +322,7 @@ class ProjectWindow(QMainWindow):
 
         header_layout.addStretch()
 
-        # プロジェクト操作ボタン
-        new_btn = QPushButton("新規")
-        new_btn.setProperty("class", "secondary")
-        new_btn.clicked.connect(self.new_project)
-        header_layout.addWidget(new_btn)
-
-        open_btn = QPushButton("開く")
-        open_btn.setProperty("class", "secondary")
-        open_btn.clicked.connect(self.open_project)
-        header_layout.addWidget(open_btn)
-
-        save_btn = QPushButton("保存")
-        save_btn.setProperty("class", "secondary")
-        save_btn.clicked.connect(self.save_project)
-        header_layout.addWidget(save_btn)
-
-        save_as_btn = QPushButton("名前を付けて保存")
-        save_as_btn.setProperty("class", "secondary")
-        save_as_btn.clicked.connect(self.save_project_as)
-        header_layout.addWidget(save_as_btn)
-
-        # ステータス
+        # ステータス表示
         voicevox_status = "✓ 接続OK" if self.voicevox.check_connection() else "✗ 未接続"
         ffmpeg_status = "✓ 検出OK" if self.ffmpeg and self.ffmpeg.check_available() else "✗ 未検出"
 

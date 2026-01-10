@@ -467,6 +467,53 @@ def get_stylesheet() -> str:
         font-size: 11pt;
     }}
 
+    /* メニューバー */
+    QMenuBar {{
+        background-color: {COLOR_PALETTE['bg_card']};
+        color: {COLOR_PALETTE['text_primary']};
+        border-bottom: 1px solid {COLOR_PALETTE['border_default']};
+        padding: 4px;
+    }}
+
+    QMenuBar::item {{
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: {RADIUS['sm']}px;
+    }}
+
+    QMenuBar::item:selected {{
+        background-color: {COLOR_PALETTE['bg_elevated']};
+    }}
+
+    QMenuBar::item:pressed {{
+        background-color: {COLOR_PALETTE['brand_light']};
+    }}
+
+    /* メニュー */
+    QMenu {{
+        background-color: {COLOR_PALETTE['bg_card']};
+        border: 1px solid {COLOR_PALETTE['border_default']};
+        border-radius: {RADIUS['default']}px;
+        padding: {SPACING['xs']}px;
+    }}
+
+    QMenu::item {{
+        padding: {SPACING['sm']}px {SPACING['xl']}px;
+        border-radius: {RADIUS['sm']}px;
+        color: {COLOR_PALETTE['text_secondary']};
+    }}
+
+    QMenu::item:selected {{
+        background-color: {COLOR_PALETTE['brand_light']};
+        color: {COLOR_PALETTE['text_primary']};
+    }}
+
+    QMenu::separator {{
+        height: 1px;
+        background-color: {COLOR_PALETTE['border_light']};
+        margin: {SPACING['xs']}px {SPACING['md']}px;
+    }}
+
     /* ステータスバー */
     QStatusBar {{
         background-color: {COLOR_PALETTE['bg_secondary']};
